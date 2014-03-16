@@ -15,7 +15,6 @@ class adaboostMM:
         m, _ = X.shape
         f = np.zeroes(m, k)
         C = np.zeroes(m, k)
-        w = np.ones(Y.size) * 1.0 /(Y.size)  # w - examples weight
         for t in range(T):
             '''choose cost matrix C'''
             # set values where l != yi
@@ -38,7 +37,5 @@ class adaboostMM:
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             #update f matrix
             f = f + alpha * (htx == Y)
-            #reweight examples
-            w = w * np.exp(-Y * alpha * htx)
         #output final classifier weights. 
 
