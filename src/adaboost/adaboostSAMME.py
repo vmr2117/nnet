@@ -55,15 +55,15 @@ def test(model_file, data_file):
     correct = np.count_nonzero(test_y == pred_y)
     print 'Accuracy: ', correct * 100 / (1.0 * len(test_y))
 
-def parse_train_args(args):
+def parse_train_args(num_learners, loss, penalty, data_file, model_file):
     '''
     parsers args required for training and calls the appropriate function.
     '''
-    ab_classifier = get_adboost_classifier(args.adb_algo, args.num_learners,
-                                           args.loss_fn, args.penalty)
-    train(ab_classifier, args.data_file, args.model_file)
+    ab_classifier = get_adboost_classifier('SAMME', num_learners, loss, 
+            penalty)
+    train(ab_classifier, data_file, model_file)
 
-def parse_test_args(args):
+def parse_test_args(model_file, data_file):
     '''
     parsers args required for testing and calls the appropriate function.
     '''
@@ -74,20 +74,35 @@ if __name__ == '__main__':
     parser.add_argument('data_file', help='path to the file containing training\
                         or testing data')
     parser.add_argument('model_file', help='path to the model file') 
+    parser.add_argument('num_learners', nargs='?', help='number of boosting\
+            rounds', default = 10, type=int)
 
-    subparsers = parser.add_subparsers(title='subcommand')
+    command_gp = parser.add_mutually_exclusive_group()
+    command_gp.set_defaults(cmd = 'train')
+    command_gp.add_argument('--train', action = 'store_const', dest = 'cmd',
+            const = 'train', help = 'train adaboost SAMME model')
+    command_gp.add_argument('--test', action = 'store_const', dest = 'cmd',
+            const = 'test', help = 'predict on test data using given adaboost\
+            SAMME model')
 
-    parser_train = subparsers.add_parser('train', help='train adaboost')
-    parser_train.add_argument('loss_fn', help='weak learner loss function') 
-    parser_train.add_argument('penalty', help='weak learner penalty') 
-    parser_train.add_argument('num_learners', help='number of weak learners',
-                                type=int) 
-    parser_train.add_argument('adb_algo', help='adaboost algorithm to use') 
-    parser_train.set_defaults(func=parse_train_args)
+    loss_gp = parser.add_mutually_exclusive_group()
+    loss_gp.set_defaults(loss = 'log')
+    loss_gp.add_argument('--log_loss', action = 'store_const', dest = 'loss',
+            const = 'log', help = 'use log loss function for training weak\
+            learners')
+    loss_gp.add_argument('--hinge_loss', action = 'store_const', dest = 'loss',
+            const = 'hinge', help = 'use hinge loss function for training weak\
+            learners')
 
-    parser_test = subparsers.add_parser('test', help='run classifier on test \
-                                        data')
-    parser_test.set_defaults(func=parse_test_args)
+    penalty_gp = parser.add_mutually_exclusive_group()
+    penalty_gp.set_defaults(pen = 'l1')
+    penalty_gp.add_argument('--l1', action = 'store_const', dest = 'pen', const
+            = 'l1', help = 'use l1 penalty for training weak learners')
+    penalty_gp.add_argument('--l2', action = 'store_const', dest = 'pen', const
+            = 'l2', help = 'use l2 penalty for training weak learners')
+
     args = parser.parse_args()
-    args.func(args)
+    if args.cmd == 'train': parse_train_args(args.num_learners, args.loss,
+            args.pen, args.data_file, args.model_file)
+    elif args.cmd == 'test': parse_test_args(args.model_file, args.data_file)
 
