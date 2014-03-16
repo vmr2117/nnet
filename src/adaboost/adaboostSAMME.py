@@ -16,19 +16,12 @@ def write(model, model_file):
     '''
     pickle.dump(model,open(model_file, 'wb'))
 
-def load_traindata(data_file):
+def load_data(data_file):
     '''
-    Loads train data from the pickle data_file
-    '''
-    data = pickle.load(open(data_file)) 
-    return (data['train_x'], data['train_y'])
-
-def load_testdata(data_file):
-    '''
-    Loads test data from the pickle data_file
+    Loads X and Y data from the pickled data_file
     '''
     data = pickle.load(open(data_file)) 
-    return (data['test_x'], data['test_y'])
+    return (data['X'], data['Y'])
 
 def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty):
     '''
@@ -47,7 +40,7 @@ def train(ab_classifier, data_file, model_file):
     Takes a configured adaboost classifier object and train it with the training
     data from the data_file and write the learned model to the model_file.
     '''
-    train_x, train_y = load_traindata(data_file)
+    train_x, train_y = load_data(data_file)
     ab_classifier = ab_classifier.fit(train_x, train_y)
     write(ab_classifier, model_file) 
 
@@ -56,7 +49,7 @@ def test(model_file, data_file):
     Tests the model on the test data in data_file using the model in model_file.
     Prints accuracy to report the performance of the classifier. 
     '''
-    test_x, test_y = load_testdata(data_file)
+    test_x, test_y = load_data(data_file)
     ab_classifier = pickle.load(open(model_file))
     pred_y = ab_classifier.predict(test_x)
     correct = np.count_nonzero(test_y == pred_y)
@@ -78,8 +71,9 @@ def parse_test_args(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser() 
-    parser.add_argument('data_file', help='train test data file')
-    parser.add_argument('model_file', help='model file') 
+    parser.add_argument('data_file', help='path to the file containing training\
+                        or testing data')
+    parser.add_argument('model_file', help='path to the model file') 
 
     subparsers = parser.add_subparsers(title='subcommand')
 
