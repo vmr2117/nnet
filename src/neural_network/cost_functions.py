@@ -3,23 +3,16 @@ This module provides loss functions.
 '''
 import numpy as np
 
-def log(Y, FX):
+def logistic_cost(Y, FX, theta, reg_lambda):
     '''
     Returns log loss.
     Y is a matrix of true labels. The examples are along the first dimesion and
     the multiclass labels are along the second dimension. Similarly, FX has the
     predicted labels; the first dimension had the examples and the second
-    dimension has the probability value for the labels. 
+    dimension has the probability value for the labels. theta is 1 dimensional
+    vector of parameters to be l2 regularized
     '''
-    return -1 * np.sum(np.multiply(Y, np.log(FX)))
-
-def square(Y, FX):
-    '''
-    Returns Square loss.
-    Y is a matrix of true labels. The examples are along the first dimesion and
-    the multiclass labels are along the second dimension. Similarly, FX has the
-    predicted labels; the first dimension had the examples and the second
-    dimension has the probability value for the labels. 
-    '''
-    return np.square(Y - FX)
+    cost = -1 * np.sum(np.multiply(Y, np.log(FX))) * 1.0/ Y.shape[0]
+    reg_cost = np.sum(np.square(theta)) * reg_lambda * 1.0 / (2 * m)
+    return cost + reg_cost
 

@@ -5,29 +5,34 @@ import numpy as np
 
 class network:
     def __init__(self, layer_units):
-        self.layer_units = layer_units 
-        self.num_wt = 0
-        for i in range(1, layer_units.size):
-            num_wt += layer_units[i] * layer_units[i-1] + layer_units[i] + 1
+        self.layer_units = layer_units
+        self.layer_weights = None
 
-    def initialize(self):
+    def __random_init():
         '''
-        Randomly initializes the weights of a neural network
+        Randomly initialize the weights of neural network.
         '''
-        self.wt = np.random.rand(self.num_wt)
+        pass
 
-    def set_weights(self, weights):
+    def __check_weights(layer_weights):
+        allok = True:
+        allok = len(layer_units) -1 == len(layer_weights)
+        # check every layer for consistent weights
+        return allok
+
+    def __weights_init(self, layer_weights):
         '''
-        Initializes the network with the given weights if the network had not
-        been already intialized.
+        Initialize the weights of the neural network with the given weights.
+        Validata num_classes, num_units and weights with the architecture
+        specified through layer_units.
         '''
-        if weights.size != self.num_wt: return False 
-        if hasattr(self, 'wt'): return False
-        self.wt = weights 
-        return True
+        assert self.__check(layer_weights), 'weights incompatible with the\
+            network acchitecture'
+        self.layer_weights = layer_weights
 
-    def train(stop_early = True, weight_decay = True, X, Y):
+    def train(self, X, Y, layer_weights = None):
+        if layer_weights == None:self.__random__init()
+        else self.__weights__init()
 
-
-    def predict(X):
+    def predict(self, X):
         pass
