@@ -14,3 +14,14 @@ def logistic(x):
 
 def logistic_derivative(x):
     return logistic(x) * (1 - logistix(x))
+
+def get_actv_func(func):
+    '''
+    Returns a tuple containing activation function 'func' and its derivative
+    function. Available activation function are logistic and tanh. 
+    '''
+    assert func in ['logistic', 'tanh'], 'Unknown activatino function'
+    if func == 'logistic':
+        return (logistic, logistic_derivative)
+    elif func == 'tanh':
+        return (tanh, tanh_derivative)
