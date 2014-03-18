@@ -10,11 +10,15 @@ class network:
         self.layer_weights = None
         self.actv, self.actv_der = get_actv_func(actv_func)
 
-    def __random_init(self):
+    def __random_init(self, num_features):
         '''
-        Randomly initialize the weights of neural network.
+        Randomly initialize the weights of neural network betwee [-0.5, 0.5).
         '''
-        pass
+        inputs = num_features
+        for layer in range(1, len(layer_units)): 
+            self.layer_weights.append(np.random.rand(inputs,
+                self.layer_units[layer]) - 0.5) 
+            inputs = self.layer_units[layer]
 
     def __check_network(self, X, Y):
         '''
@@ -100,7 +104,7 @@ class network:
         network with the provided layer_weights. If no layer_weights are
         provided use random weights to initialize the network.
         '''
-        if layer_weights == None:self.__random__init()
+        if layer_weights == None:self.__random__init(X.shape[1])
         else: self.__weights_init(layer_weights)
         assert self.__check_network(X, Y), 'weights or X,Y incompatible with the \
             network architecture'
