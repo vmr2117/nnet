@@ -18,7 +18,7 @@ def fetch_mnistdata(train_pct, classes):
     dictionary in the tuple is the testing set.
     '''
     mnist = fetch_mldata('MNIST original')
-    data = mnist.data
+    data = mnist.data * 1.0 / 255 # normalize the inputs.
     target = mnist.target.astype(int) # convert labels to int
 
     data = data[np.logical_or.reduce([target == cls for cls in classes])]  
