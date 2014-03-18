@@ -16,20 +16,28 @@ class network:
         '''
         pass
 
-    def __check_weights(self, layer_weights):
+    def __check_network(self, X, Y):
+        '''
+        Validate the newtork architecture and the inputs layer_weights, X and Y
+        for compatibility.
+        '''
         allok = True
-        allok = len(layer_units) - 1 == len(layer_weights)
+        allok = len(self.layer_units) - 1 == len(self.layer_weights)
+
         # check every layer for consistent weights
+        input_units = X.shape[1]
+        for layer in range(1, len(self.layer_units)):
+            layer_r, layer_c = self.layer_weights[layer - 1].shape
+            allok = (self.layer_units[layer] == layer_r and layer_c ==
+                    input_units) 
+            if not allok break
+            input_units = self.layer_units[layer]
         return allok
 
     def __weights_init(self, layer_weights):
         '''
         Initialize the weights of the neural network with the given weights.
-        Validata num_classes, num_units and weights with the architecture
-        specified through layer_units.
         '''
-        assert self.__check_weights(layer_weights), 'weights incompatible with the\
-            network acchitecture'
         self.layer_weights = layer_weights
 
     def __fwd_prop(self, x):
@@ -52,7 +60,7 @@ class network:
         error = activation[-1] - y
         deltas = [error] 
         for layer in range(-2, 0, -1):
-            deltas.append(np.multiply(np.dot(self.layer_weight[layer],
+            jdeltas.append(np.multiply(np.dot(self.layer_weight[layer],
                 deltas[-1]), self.actv_der(activation[layer])))
         delta = reverse(delta)
 
@@ -94,7 +102,24 @@ class network:
         '''
         if layer_weights == None:self.__random__init()
         else: self.__weights_init(layer_weights)
+        assert self.__check_network(X, Y), 'weights or X,Y incompatible with the \
+            network architecture'
         self.__sgd(X,Y)
+        
+    def save_model(self, ddir, suffix = ''):
+        '''
+        Save the current model to disk in the ddir directory. Additionally add
+        any suffix given to the file name; this can be use to give specific
+        names to model based on the settings used to create it.
+        '''
+        pickle.dump(self.layer_weights, open(path.join(ddir, '_', suffix,
+            '.model', 'wb')))
+            
+    def load_model(self, model_file):
+        '''
+        Load a saved model.
+        '''
+        self.layer_weights = pickle.load(open(mode_File))
 
     def predict(self, X, Y):
         '''
