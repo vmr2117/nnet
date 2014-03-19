@@ -95,7 +95,7 @@ if __name__ == '__main__':
             learners')
 
     penalty_gp = parser.add_mutually_exclusive_group()
-    penalty_gp.set_defaults(pen = 'l1')
+    penalty_gp.set_defaults(pen = 'l2')
     penalty_gp.add_argument('--l1', action = 'store_const', dest = 'pen', const
             = 'l1', help = 'use l1 penalty for training weak learners')
     penalty_gp.add_argument('--l2', action = 'store_const', dest = 'pen', const

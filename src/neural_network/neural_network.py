@@ -125,7 +125,7 @@ class network:
         '''
         self.layer_weights = pickle.load(open(mode_File))
 
-    def predict(self, X, Y):
+    def predict(self, X):
         '''
         Predict the classes based on the learned model and measure accuracy. 
         '''
@@ -134,6 +134,7 @@ class network:
         for row in range(r):
             activations = self.__fwd_prop(X[row])[-1]
             pred_y[row] = np.argmax(activations)
+        return pred_y
         print np.sum(pred_y == Y) * 1.0 / r
         
         
