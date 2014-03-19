@@ -27,9 +27,9 @@ def fetch_mnistdata(train_pct, classes, indveclab):
     data, target = shuffle(data, target, random_state=34)
 
     if indveclab == True:
-        num_classes = np.unique(target)
+        num_classes = np.unique(target).size
         t = np.zeros((target.size, num_classes), dtype=int)
-        t[np.array(range(t.size)), t] = 1
+        t[np.array(range(target.size)), target] = 1
         target = t
 
     trainsize = int(len(target) * train_pct)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
         suffix = 'binary_' + args.classes
 
     indveclab = False
-    if args.indveclab == 'indveclab': 
+    if args.indveclab == 'indicator': 
         indveclab = True
         suffix += '_indicator_target'
     data = fetch_mnistdata(args.train_proportion, classes, indveclab)

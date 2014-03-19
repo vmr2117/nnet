@@ -135,6 +135,5 @@ class network:
             activations = self.__fwd_prop(X[row])[-1]
             pred_y[row] = np.argmax(activations)
         return pred_y
-        print np.sum(pred_y == Y) * 1.0 / r
         
         
