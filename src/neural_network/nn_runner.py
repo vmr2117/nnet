@@ -4,7 +4,7 @@ Script to train a neural network. See command line options for more details.
 import argparse
 import cPickle as pickle
 
-from neural_network import train, predict, save_model, load_model
+from neural_network import network
 
 def train(data_file, layer_units, actv, init_wt_file, model_path):
     nnet = network(layer_units, actv)
@@ -15,7 +15,7 @@ def train(data_file, layer_units, actv, init_wt_file, model_path):
 
 def test(data_file, layer_units, actv, model_file):
     nnet = network(layer_units, actv)
-    nnet.load_model(model_file))
+    nnet.load_model(model_file)
     data = pickle.load(open(data_file))
     pred_y = nnet.predict(data['X'])
     print np.sum(pred_y == data['Y']) * 1.0 / data['Y'].size
@@ -32,7 +32,8 @@ if __name__ == '__main__':
     command_gp.add_argument('--train', action = 'store_const', dest = 'cmd',
             const = 'train', help = 'train neural network')
     command_gp.add_argument('--test', action = 'store_const', dest = 'cmd',
-            const = 'test', help = 'predict on test data using given nnet model'
+            const = 'test', help = 'predict on test data using given nnet \
+            model')
 
     actv_gp = parser.add_mutually_exclusive_group()
     actv_gp.set_defaults(actv = 'logistic')

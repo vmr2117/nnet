@@ -34,7 +34,7 @@ class network:
             layer_r, layer_c = self.layer_weights[layer - 1].shape
             allok = (self.layer_units[layer] == layer_r and layer_c ==
                     input_units) 
-            if not allok break
+            if not allok: break
             input_units = self.layer_units[layer]
         return allok
 
