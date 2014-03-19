@@ -6,10 +6,9 @@ import cPickle as pickle
 
 from neural_network import network
 
-def train(data_file, layer_units, actv, init_wt_file, model_path):
+def train(data_file, layer_units, actv, model_path, init_wts = None):
     nnet = network(layer_units, actv)
     data = pickle.load(open(data_file))
-    init_wts = pickle.load(open(init_wt_file))
     nnet.train(data['X'], data['Y'], init_wts)
     nnet.save_model(model_path)
 
@@ -61,6 +60,8 @@ if __name__ == '__main__':
 
     assert args.net_arch, 'Network architecture not provided'
     layer_units = [int(num) for num in args.net_arch.strip().split(',')]
+    init_wts = None
+    if args.init_wt_file: init_wts = pickle.load(open(init_wt_file))
     if args.cmd == 'train':
         train(args.data_file, layer_units, args.actv, args.init_wt_file,
             args.model_file)
