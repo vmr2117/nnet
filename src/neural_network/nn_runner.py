@@ -51,8 +51,8 @@ if __name__ == '__main__':
     '''
 
     parser.add_argument('net_arch', nargs='?', help='comma separated values \
-        indicating the number of units in each layer. The layers are specified \
-        from left to right')
+        indicating the number of units in each hidden layer. The layers are
+        specified from left to right')
     parser.add_argument('init_wt_file', nargs='?', help='path to the file \
         containing initial weights.')
 
@@ -60,11 +60,11 @@ if __name__ == '__main__':
 
     assert args.net_arch, 'Network architecture not provided'
     layer_units = [int(num) for num in args.net_arch.strip().split(',')]
+    print layer_units 
     init_wts = None
     if args.init_wt_file: init_wts = pickle.load(open(init_wt_file))
     if args.cmd == 'train':
-        train(args.data_file, layer_units, args.actv, args.init_wt_file,
-            args.model_file)
+        train(args.data_file, layer_units, args.actv, args.model_file, init_wts)
     elif args.cmd == 'test':
         test(args.data_file, layer_units, args.actv, args.model_file)
 
