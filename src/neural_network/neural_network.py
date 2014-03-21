@@ -5,20 +5,18 @@ import numpy as np
 from activation_functions import get_actv_func
 
 class network:
-    def __init__(self, layer_units, actv_func):
-        self.layer_units = layer_units
-        self.layer_weights = None
+    def __init__(self, hl_units, actv_func):
+        self.hl_units = hl_units
+        self.layer_weights = []
         self.actv, self.actv_der = get_actv_func(actv_func)
 
-    def __random_init(self, num_features):
+    def __random_init(self, input_units):
         '''
-        Randomly initialize the weights of neural network betwee [-0.5, 0.5).
-        '''
-        inputs = num_features
-        for layer in range(1, len(layer_units)): 
-            self.layer_weights.append(np.random.rand(inputs,
-                self.layer_units[layer]) - 0.5) 
-            inputs = self.layer_units[layer]
+        Randomly initialize the weights of neural network between [-0.5, 0.5).
+        ''' 
+        self.layer_weights.append(np.random.rand(input_units,
+            self.hl_units) - 0.5) 
+        self.layer_weights.append(np.random.rand(
 
     def __check_network(self, X, Y):
         '''
@@ -31,6 +29,7 @@ class network:
         # check every layer for consistent weights
         input_units = X.shape[1]
         for layer in range(1, len(self.layer_units)):
+            print self.layer_weights[layer - 1]
             layer_r, layer_c = self.layer_weights[layer - 1].shape
             allok = (self.layer_units[layer] == layer_r and layer_c ==
                     input_units) 
@@ -44,15 +43,20 @@ class network:
         '''
         self.layer_weights = layer_weights
 
-    def __fwd_prop(self, x):
+    def __fwd_prop(self, x, y):
         '''
         Forward propagate the input value with current weights and return
         activations at each stage.
         '''
         activation = [x]
+        # activations at hidden layers
         for layer in range(1, len(self.layer_units) - 1):
             activation.append(self.actv(np.dot(activation[layer - 1],
                 self.layer_weights[layer])))
+
+        #activation at finaly layer
+        activation.append(self.actv(np.dot(activation[-1].reshape(y.size, -1).T ,
+            self.layer_weights[-1])))
         return activation
              
     def __back_prop(self, activation, y):
@@ -73,7 +77,7 @@ class network:
         Calculates the partial derivatives at given x and y using fwd and back
         propagation.
         '''
-        activation = self.fwd_prop(x)
+        activation = self.fwd_prop(x, y)
         deltas = self.back_prop(activation, y)
         p_derivs = []
         for layer in range(1, len(activation)):
@@ -95,16 +99,18 @@ class network:
         '''
         for epoch in range(epochs):
            ind = numpy.random.randint(0, high=70000)
-           p_derivs = self.__derivatives(X[ind], Y[ind])
+           p_derivs = self.__derivatives(X[ind], Y[ind],)
            self.__update_weights(p_derivs, learning_rate)
 
-    def train(self, X, Y, layer_weights = None):
+    def train(self, X, Y, layer_weights = None, fit_intercept = True):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the provided layer_weights. If no layer_weights are
         provided use random weights to initialize the network.
         '''
-        if layer_weights == None:self.__random__init(X.shape[1])
+        if fit_intercept:
+            X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
+        if layer_weights == None:self.__random_init(X.shape[1])
         else: self.__weights_init(layer_weights)
         assert self.__check_network(X, Y), 'weights or X,Y incompatible with the \
             network architecture'
