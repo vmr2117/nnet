@@ -101,7 +101,6 @@ if __name__ == '__main__':
         classes = [int(args.classes[0]), int(args.classes[1])]
         suffix = 'binary_' + args.classes
 
-    indveclab = False
-    data = fetch_mnistdata(args.train_proportion, classes, indveclab)
+    data = fetch_mnistdata(args.train_proportion, classes)
     write(data, args.path, args.fmt, suffix)
 
