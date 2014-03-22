@@ -119,21 +119,6 @@ class network:
         # train
         self.__sgd(X,Y)
         
-    def save_model(self, ddir, suffix = ''):
-        '''
-        Save the current model to disk in the ddir directory. Additionally add
-        any suffix given to the file name; this can be use to give specific
-        names to model based on the settings used to create it.
-        '''
-        pickle.dump(self.layer_weights, open(path.join(ddir, '_', suffix,
-            '.model', 'wb')))
-            
-    def load_model(self, model_file):
-        '''
-        Load a saved model.
-        '''
-        self.layer_weights = pickle.load(open(mode_File))
-
     def predict(self, X):
         '''
         Predict the classes based on the learned model and measure accuracy. 
@@ -144,5 +129,14 @@ class network:
             activations = self.__fwd_prop(X[row])[-1]
             pred_y[row] = np.argmax(activations)
         return pred_y
+
+    def write_weights(self, filepath):
+        '''
+        Writes the weights of the neural network to the disk.
+        '''
+        if len(self.layer_weights) > 0:
+            pickle.write(self.layer_weights, open(filepath,'wb'))
+            return true
+        else: return false
         
         
