@@ -10,13 +10,12 @@ from os import path
 from sklearn.datasets import fetch_mldata
 from sklearn.utils import shuffle
 
-def fetch_mnistdata(train_pct, classes, indveclab):
+def fetch_mnistdata(train_pct, classes):
     '''
     Fetches mnist digits dataset for the given classes and splits the data into
     training and testing sets according to the trainsize percentage. The first
     dictionary in the returned tuple is the training set and the second
-    dictionary in the tuple is the testing set. If indveclab is true, then the
-    labels are stored as indicator vectors.
+    dictionary in the tuple is the testing set.
     '''
     mnist = fetch_mldata('MNIST original')
     data = mnist.data * 1.0 / 255 # normalize the inputs.
@@ -25,12 +24,6 @@ def fetch_mnistdata(train_pct, classes, indveclab):
     data = data[np.logical_or.reduce([target == cls for cls in classes])]  
     target = target[np.logical_or.reduce([target == cls for cls in classes])]
     data, target = shuffle(data, target, random_state=34)
-
-    if indveclab == True:
-        num_classes = np.unique(target).size
-        t = np.zeros((target.size, num_classes), dtype=int)
-        t[np.array(range(target.size)), target] = 1
-        target = t
 
     trainsize = int(len(target) * train_pct)
     return ({'X':data[:trainsize], 'Y':target[:trainsize]},   
@@ -94,9 +87,6 @@ if __name__ == '__main__':
     cl_gp.add_argument('--binary', action='store_const', dest='cl_type',
         const='binary' , help='for binary classification problem')
     
-    parser.add_argument('--indveclab', action='store_const', dest='indveclab',
-        const='indicator',help='store class labels as indicator vectors')
-
     parser.add_argument('classes', nargs='?', default='89', help= 'in case of \
         two class specify the two classes in a string without any space') 
 
@@ -112,9 +102,6 @@ if __name__ == '__main__':
         suffix = 'binary_' + args.classes
 
     indveclab = False
-    if args.indveclab == 'indicator': 
-        indveclab = True
-        suffix += '_indicator_target'
     data = fetch_mnistdata(args.train_proportion, classes, indveclab)
     write(data, args.path, args.fmt, suffix)
 
