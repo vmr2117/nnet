@@ -92,18 +92,18 @@ class network:
         Performs stochastic gradient descent on the dataset X,Y for the given
         number of epochs using the given learning rate.
         '''
-        for epoch in range(epochs):
-           ind = np.random.randint(0, high=X.shape[0])
+        for ind in range(X.shape[0]):
            p_derivs = self.__derivatives(X[ind], Y[ind],)
            self.__update_weights(p_derivs, learning_rate)
-           if epoch%100 == 0:
-               print "Iterations completed: ",epoch
+           if ind%100 == 0:
+               print "Iterations completed: ", ind+1
 
     def train(self, X, Y, hidden_units, layer_weights = None):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the provided layer_weights. If no layer_weights are
-        provided use random weights to initialize the network.
+        provided use random weights to initialize the network. Also, the
+        training data is assumed to be randomly shuffled already.
         '''
         # add extra feature for bias
         X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
