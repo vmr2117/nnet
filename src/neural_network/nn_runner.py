@@ -54,7 +54,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     init_wts = None
-    if args.init_wt_file: init_wts = pickle.load(open(init_wt_file))
+    if args.init_wt_file: init_wts = pickle.load(open(args.init_wt_file))
     if args.cmd == 'train':
         train(args.data_file, args.actv, args.hidden_units, args.model_file, init_wts)
     elif args.cmd == 'test':
