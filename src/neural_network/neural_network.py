@@ -13,7 +13,7 @@ class network:
         '''
         Randomly initialize the weights of neural network between [-0.5, 0.5).
         ''' 
-        self.layer_weights.append(np.random.rand(self.hl_units, n_features) -
+        self.layer_weights.append(np.random.rand(hidden_units, n_features) -
                 0.5) 
 
         col_inds = np.arange(hidden_units).reshape((n_classes,-1),
@@ -34,14 +34,15 @@ class network:
     def __fwd_prop(self, x, y):
         '''
         Forward propagate the input value with current weights and return
-        activations at each stage.
+        activations at each stage. The first activation entry is always the
+        input itself.
         '''
         activation = [x]
         # calculate activations at hidden layer and output layers
         for ind, l_wt in enumerate(self.layer_weights):
-            activation.append(self.actv(np.dot(activation[ind], l_wt))) 
+            activation.append(self.actv(np.dot(l_wt, activation[ind]))) 
 
-        return activation[1:]
+        return activation
              
     def __back_prop(self, activation, y):
         '''
@@ -55,14 +56,15 @@ class network:
         errors = [activation[-1] - y]
 
         # compute errors on hidden layers from o/p to i/p direction
-        for ind in xrange(len(n_layers) - 2):
+        for ind in range(n_layers - 2):
             layer_ind = -(1 + ind)
             wt = self.layer_weights[layer_ind]
-            act = activation[layer_ind]
+            act = activation[layer_ind - 1]
             next_layer_err = errors[-1]
-            errors.append(np.multiply(np.dot(layer_wt, next_layer_err),
+            errors.append(np.multiply(np.dot(wt.T, next_layer_err),
                 self.actv_der(act))) 
-        return reverse(errors)
+        errors.reverse()
+        return errors
 
     def __derivatives(self, x, y):
         '''
@@ -71,19 +73,19 @@ class network:
 
         Return partial derivatives for the weight matrices.
         '''
-        activation = self.fwd_prop(x, y)
-        deltas = self.back_prop(activation, y)
-        p_derivs = [np.outer(activation[layer], deltas[layer]) for layer in
-                range(0, len(activation))] 
+        activation = self.__fwd_prop(x, y)
+        deltas = self.__back_prop(activation, y)
+        p_derivs = [np.outer(deltas[layer], activation[layer]) for layer in
+                range(0, len(activation) - 1)] 
         return p_derivs
 
-    def __update_weights(self, p__derivs, learning_rate):
+    def __update_weights(self, p_derivs, learning_rate):
         '''
         Updates the current weights using the given partial derivatives and the
         learning rate.
         '''
         for layer in range(len(self.layer_weights)): 
-            self.layer_weights -= np.multiply(learning_rate, p_derivs[layer])
+            self.layer_weights[layer] -=  p_derivs[layer]
 
     def __sgd(self, X, Y, epochs = 70000, learning_rate = 1.0):
         '''
@@ -91,9 +93,11 @@ class network:
         number of epochs using the given learning rate.
         '''
         for epoch in range(epochs):
-           ind = numpy.random.randint(0, high=70000)
+           ind = np.random.randint(0, high=X.shape[0])
            p_derivs = self.__derivatives(X[ind], Y[ind],)
            self.__update_weights(p_derivs, learning_rate)
+           if epoch%100 == 0:
+               print "Iterations completed: ",epoch
 
     def train(self, X, Y, hidden_units, layer_weights = None):
         '''
@@ -107,7 +111,7 @@ class network:
         n_classes = np.unique(Y).size
 
         # convert Y into a matrix of indicator vector for the class
-        new_Y = np.zeros((Y.size, num_classes), dtype=int)
+        new_Y = np.zeros((Y.size, n_classes), dtype=int)
         new_Y[np.array(range(Y.size)), Y] = 1
         Y = new_Y
         
@@ -135,7 +139,7 @@ class network:
         Writes the weights of the neural network to the disk.
         '''
         if len(self.layer_weights) > 0:
-            pickle.write(self.layer_weights, open(filepath,'wb'))
+            pickle.dump(self.layer_weights, open(filepath,'wb'))
             return true
         else: return false
         

@@ -11,7 +11,7 @@ def train(data_file, actv, n_hidden_units, model_file, init_wts = None):
     nnet = network(actv)
     data = pickle.load(open(data_file))
     nnet.train(data['X'], data['Y'], n_hidden_units, init_wts)
-    pickle.write(nnet, open(model_file, 'wb'))
+    pickle.dump(nnet, open(model_file, 'wb'))
 
 def test(data_file, model_file):
     nnet = pickle.load(open(model_file))
