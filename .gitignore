@@ -34,3 +34,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# ml artifacts
+*.train
+*.test
+*.model
+*.weights
