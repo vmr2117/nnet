@@ -3,6 +3,7 @@ Script to train a neural network. See command line options for more details.
 '''
 import argparse
 import cPickle as pickle
+import numpy as np
 import sys
 
 from neural_network import network
@@ -16,7 +17,7 @@ def train(data_file, actv, n_hidden_units, model_file, init_wts = None):
 def test(data_file, model_file):
     nnet = pickle.load(open(model_file))
     data = pickle.load(open(data_file))
-    pred_y = nnet.predict(data['X'], actv)
+    pred_y = nnet.predict(data['X'])
     print np.sum(pred_y == data['Y']) * 1.0 / data['Y'].size
 
 
@@ -48,7 +49,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not args.hidden_units:
+    if not args.hidden_units and args.cmd == 'train':
         print "No hidden_units provided"
         sys.exit(1)
 

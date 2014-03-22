@@ -31,7 +31,7 @@ class network:
         '''
         self.layer_weights = layer_weights
 
-    def __fwd_prop(self, x, y):
+    def __fwd_prop(self, x):
         '''
         Forward propagate the input value with current weights and return
         activations at each stage. The first activation entry is always the
@@ -73,7 +73,7 @@ class network:
 
         Return partial derivatives for the weight matrices.
         '''
-        activation = self.__fwd_prop(x, y)
+        activation = self.__fwd_prop(x)
         deltas = self.__back_prop(activation, y)
         p_derivs = [np.outer(deltas[layer], activation[layer]) for layer in
                 range(0, len(activation) - 1)] 
@@ -127,6 +127,8 @@ class network:
         '''
         Predict the classes based on the learned model and measure accuracy. 
         '''
+        # add extra feature for bias
+        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
         r, _ = X.shape
         pred_y = np.empty(r, dtype=int)
         for row in range(r):
