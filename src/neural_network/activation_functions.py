@@ -13,7 +13,7 @@ def logistic(x):
     return 1 / (1 + exp(-x)) 
 
 def logistic_derivative(x):
-    return logistic(x) * (1 - logistix(x))
+    return logistic(x) * (1 - logistic(x))
 
 def get_actv_func(func):
     '''
