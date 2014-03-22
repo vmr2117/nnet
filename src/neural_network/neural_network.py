@@ -138,8 +138,8 @@ class network:
         '''
         Predict the classes based on the learned model and measure accuracy. 
         '''
-        pred_y = np.empty(Y.shape, dtype=int)
         r, _ = X.shape
+        pred_y = np.empty(r, dtype=int)
         for row in range(r):
             activations = self.__fwd_prop(X[row])[-1]
             pred_y[row] = np.argmax(activations)
