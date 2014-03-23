@@ -1,7 +1,9 @@
 '''
 Module to construct a fully connected neural network.
 '''
+import copy
 import numpy as np
+
 from activation_functions import get_actv_func
 
 class network:
@@ -79,6 +81,20 @@ class network:
                 range(0, len(activation) - 1)] 
         return p_derivs
 
+    def check_gradient(self):
+        '''
+        Checks gradients computed by fwd/back prop.
+        '''
+        for layer in len(self.layer_weights): 
+            for (x,y), _ in np.nd_enumerate(self.layer_weight[layer]):
+                layer_wts_cp = copy.deepcopy(self.layer_weights) 
+                layer_wts_cp[layer][x][y] += EPS
+                cost_1 = cost(layer_wts_cp)
+                layer_wts_cp[layer][x][x] -= 2 * EPS
+                cost_2 = cost(layer_wts_cp)
+                grad = (cost_1 - cost_2) / 2 * EPS 
+
+
     def __update_weights(self, p_derivs, learning_rate):
         '''
         Updates the current weights using the given partial derivatives and the
@@ -144,5 +160,4 @@ class network:
             pickle.dump(self.layer_weights, open(filepath,'wb'))
             return true
         else: return false
-        
         
