@@ -11,13 +11,14 @@ from neural_network import network
 def train(data_file, actv, n_hidden_units, model_file, init_wts = None):
     nnet = network(actv)
     data = pickle.load(open(data_file))
-    nnet.train(data['X'], data['Y'], n_hidden_units, init_wts)
-    pickle.dump(nnet, open(model_file, 'wb'))
+    theta = nnet.train(data['X'], data['Y'], n_hidden_units, init_wts)
+    pickle.dump(theta, open(model_file, 'wb'))
 
-def test(data_file, model_file):
-    nnet = pickle.load(open(model_file))
+def test(data_file, actv, model_file):
+    nnet = network(actv)
+    theta = pickle.load(open(model_file))
     data = pickle.load(open(data_file))
-    pred_y = nnet.predict(data['X'])
+    pred_y = nnet.predict(data['X'], theta)
     print np.sum(pred_y == data['Y']) * 1.0 / data['Y'].size
 
 
@@ -58,5 +59,5 @@ if __name__ == '__main__':
     if args.cmd == 'train':
         train(args.data_file, args.actv, args.hidden_units, args.model_file, init_wts)
     elif args.cmd == 'test':
-        test(args.data_file, args.model_file)
+        test(args.data_file, args.actv, args.model_file)
 
