@@ -27,6 +27,21 @@ class network:
 
         self.layer_weights.append(weights)
 
+    def __get_indicator_vector(self, Y):
+        '''
+        convert Y into a matrix of indicator vectors
+        '''
+        new_Y = np.zeros((Y.size, n_classes), dtype=int)
+        new_Y[np.array(range(Y.size)), Y] = 1
+        return Y
+
+    def __extend_for_bias(self, X):
+        '''
+        Extend the feature matrix to add bias.
+        '''
+        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
+        return X
+
     def __weights_init(self, layer_weights):
         '''
         Initialize the weights of the neural network with the given weights.
@@ -81,10 +96,15 @@ class network:
                 range(0, len(activation) - 1)] 
         return p_derivs
 
-    def check_gradient(self):
+    def check_gradient(self, X, Y):
         '''
-        Checks gradients computed by fwd/back prop.
+        Checks gradients computed by fwd/back prop. Return True if the gradients
+        computed by back_prop are close the numerically computed gradient by
+        0.001; else return False.
         '''
+        # calculate gradient numerically
+        EPS = 10e-4
+        grad = [np.empty_like(weights) for weights in self.layer_weights]
         for layer in len(self.layer_weights): 
             for (x,y), _ in np.nd_enumerate(self.layer_weight[layer]):
                 layer_wts_cp = copy.deepcopy(self.layer_weights) 
@@ -92,8 +112,22 @@ class network:
                 cost_1 = cost(layer_wts_cp)
                 layer_wts_cp[layer][x][x] -= 2 * EPS
                 cost_2 = cost(layer_wts_cp)
-                grad = (cost_1 - cost_2) / 2 * EPS 
+                grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
 
+        # calculate gradient using back propagation
+        X = self.__extend_for_bias(X)
+        Y = self.__get_indicator_vector(Y)
+        r, _ = X.shape
+
+        # calculate gradient using back propagation
+        derv = [np.zeros_like(weights) for weights in self.layer_weights]
+        for row in range(r):
+            derv_c = self.__derivatives(X[row], Y[row])
+            for i in range(len(derv)): derv[i] += derv_c[i]
+
+        diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
+                zip(grad, derv)]
+        return max(diff) < 0.001
 
     def __update_weights(self, p_derivs, learning_rate):
         '''
@@ -121,16 +155,11 @@ class network:
         provided use random weights to initialize the network. Also, the
         training data is assumed to be randomly shuffled already.
         '''
-        # add extra feature for bias
-        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
-        n_examples, n_features = X.shape
         n_classes = np.unique(Y).size
+        X = self.__extend_for_bias(X)
+        Y = self.__get_indicator_vector(Y)
+        n_examples, n_features = X.shape
 
-        # convert Y into a matrix of indicator vector for the class
-        new_Y = np.zeros((Y.size, n_classes), dtype=int)
-        new_Y[np.array(range(Y.size)), Y] = 1
-        Y = new_Y
-        
         # initialize network
         if layer_weights == None:self.__random_init(n_features, n_classes,
                 hidden_units)
@@ -144,7 +173,7 @@ class network:
         Predict the classes based on the learned model and measure accuracy. 
         '''
         # add extra feature for bias
-        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
+        X = self.__extend_for_bias(X)
         r, _ = X.shape
         pred_y = np.empty(r, dtype=int)
         for row in range(r):
