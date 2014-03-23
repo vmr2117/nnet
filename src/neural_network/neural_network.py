@@ -11,10 +11,9 @@ from cost_function import logistic_cost
 
 class network:
     def __init__(self, actv_func):
-        self.layer_weights = []
         self.actv, self.actv_der = get_actv_func(actv_func)
 
-    def __random_init(self, n_features, n_classes, hidden_units):
+    def __random_weights(self, n_features, n_classes, hidden_units):
         '''
         Initializes weights for 1 hidden layer neural network architecture.
         Weights are chosed uniformly from [-0.5, 0.5).
@@ -99,18 +98,25 @@ class network:
                 range(0, len(activation) - 1)] 
         return p_derivs
 
-    def check_gradient(self, X, Y):
+    def check_gradient(self, X, Y, hidden_units = 100):
         '''
-        Checks gradients computed by fwd/back prop. Return True if the gradients
-        computed by back_prop are close the numerically computed gradient by
-        0.001; else return False.
+        Checks gradients computed by back propagation.
+        
+        Return: True/False - True if the gradients computed by back_prop are
+                within 0.001 of the numerically computed gradients.
         '''
+        X = self.__extend_for_bias(X)
+        _, n_features = X.shape
+        n_classes = np.unique(Y).size
+        Y = self.__get_indicator_vector(Y)
+
+        theta = self.__random_weights(n_features, n_classes, hidden_units)
         # calculate gradient numerically
         EPS = 10e-4
-        grad = [np.empty_like(weights) for weights in self.layer_weights]
-        for layer in range(len(self.layer_weights)): 
-            for (x,y), _ in np.nd_enumerate(self.layer_weight[layer]):
-                layer_wts_cp = copy.deepcopy(self.layer_weights) 
+        grad = [np.empty_like(weights) for weights in theta]
+        for layer in range(len(theta)): 
+            for (x,y), _ in np.nd_enumerate(theta[layer]):
+                layer_wts_cp = copy.deepcopy(theta) 
                 layer_wts_cp[layer][x][y] += EPS
                 cost_1 = logistic_cost(layer_wts_cp)
                 layer_wts_cp[layer][x][x] -= 2 * EPS
@@ -118,14 +124,12 @@ class network:
                 grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
 
         # calculate gradient using back propagation
-        X = self.__extend_for_bias(X)
-        Y = self.__get_indicator_vector(Y)
         r, _ = X.shape
 
         # calculate gradient using back propagation
-        derv = [np.zeros_like(weights) for weights in self.layer_weights]
+        derv = [np.zeros_like(weights) for weights in theta]
         for row in range(r):
-            derv_c = self.__derivatives(X[row], Y[row])
+            derv_c = self.__derivatives(X[row], Y[row], theta)
             for i in range(len(derv)): derv[i] += derv_c[i]
 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
@@ -141,25 +145,29 @@ class network:
         for layer in range(len(theta)): 
             theta[layer] -=  p_derivs[layer]
 
-    def __sgd(self, X, Y, epochs = 70000, learning_rate = 1.0):
+    def __sgd(self, X, Y, theta, epochs = 70000, learning_rate = 1.0):
         '''
         Performs stochastic gradient descent on the dataset X,Y for the given
         number of epochs using the given learning rate.
         '''
         for ind in range(X.shape[0]):
-           p_derivs = self.__derivatives(X[ind], Y[ind], self.layer_weights)
-           self.__update_weights(p_derivs, learning_rate, self.layer_weights)
+           p_derivs = self.__derivatives(X[ind], Y[ind], theta)
+           self.__update_weights(p_derivs, learning_rate, theta)
            if ind % 100 == 0:
                print "Iterations completed: ", ind + 1
         print "Iterations completed: ", ind
 
-    def train(self, X, Y, hidden_units, layer_weights = None):
+    def train(self, X, Y, hidden_units = None, theta = None):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
-        network with the provided layer_weights. If no layer_weights are
-        provided use random weights to initialize the network. Also, the
-        training data is assumed to be randomly shuffled already.
+        network with the weights theta, if provided, else uses the hidden units
+        parameter and generates weights theta randomly. Training data is assumed
+        to be randomly shuffled already. 
+
+        Return: theta - final weights of the network
         '''
+        assert (hidden_units | layer_weights), 'Hidden units or layer_weights \
+                                                required'
         X = self.__extend_for_bias(X)
         Y = self.__get_indicator_vector(Y)
         n_examples, n_features = X.shape
@@ -167,35 +175,26 @@ class network:
 
         # initialize network
         if theta == None:
-            theta = self.__random_init(n_features, n_classes, hidden_units)
+            theta = self.__random_weights(n_features, n_classes, hidden_units)
 
         # train
         self.__sgd(X, Y, theta)
         return theta.
         
-    def predict(self, X, theta = None):
+    def predict(self, X, theta):
         '''
-        Predict the classes based on the learned model. If theta is provided,
-        then it is used to make the predictions, else the layer_weights in the
-        current model is used. 
+        Predict the classes based using the weights of the neural network theta.
+
+        Return: pred_y - predicted classes under the given weights theta
         '''
         # add extra feature for bias
         X = self.__extend_for_bias(X)
         r, _ = X.shape
         pred_y = np.empty(r, dtype=int)
         for row in range(r):
-            activations = self.__fwd_prop(X[row])[-1]
+            activations = self.__fwd_prop(X[row], theta)[-1]
             pred_y[row] = np.argmax(activations)
         return pred_y
-
-    def write_weights(self, filepath):
-        '''
-        Writes the weights of the neural network to the disk.
-        '''
-        if len(self.layer_weights) > 0:
-            pickle.dump(self.layer_weights, open(filepath,'wb'))
-            return true
-        else: return false
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
