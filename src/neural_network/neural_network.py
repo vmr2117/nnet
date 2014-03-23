@@ -7,7 +7,7 @@ import cPickle as pickle
 import numpy as np
 
 from activation_functions import get_actv_func
-from cost_function import logistic_cost
+from cost_functions import logistic_cost
 
 class network:
     def __init__(self, actv_func):
@@ -41,7 +41,7 @@ class network:
         n_classes = np.unique(Y).size
         new_Y = np.zeros((Y.size, n_classes), dtype=int)
         new_Y[np.array(range(Y.size)), Y] = 1
-        return Y
+        return new_Y
 
     def __extend_for_bias(self, X):
         '''
@@ -166,12 +166,13 @@ class network:
 
         Return: theta - final weights of the network
         '''
-        assert (hidden_units | layer_weights), 'Hidden units or layer_weights \
-                                                required'
+        ok = (hidden_units is not None or theta is not None)
+        assert ok, 'hidden units / weights missing'
+
         X = self.__extend_for_bias(X)
         Y = self.__get_indicator_vector(Y)
         n_examples, n_features = X.shape
-        n_classes, _ = Y.shape
+        _, n_classes = Y.shape
 
         # initialize network
         if theta == None:
@@ -179,7 +180,7 @@ class network:
 
         # train
         self.__sgd(X, Y, theta)
-        return theta.
+        return theta
         
     def predict(self, X, theta):
         '''
