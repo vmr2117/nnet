@@ -1,10 +1,13 @@
 '''
 Module to construct a fully connected neural network.
 '''
+import argparse
 import copy
+import cPickle as pickle
 import numpy as np
 
 from activation_functions import get_actv_func
+from cost_function import logistic_cost
 
 class network:
     def __init__(self, actv_func):
@@ -31,6 +34,7 @@ class network:
         '''
         convert Y into a matrix of indicator vectors
         '''
+        n_classes = np.unique(Y).size
         new_Y = np.zeros((Y.size, n_classes), dtype=int)
         new_Y[np.array(range(Y.size)), Y] = 1
         return Y
@@ -105,13 +109,13 @@ class network:
         # calculate gradient numerically
         EPS = 10e-4
         grad = [np.empty_like(weights) for weights in self.layer_weights]
-        for layer in len(self.layer_weights): 
+        for layer in range(len(self.layer_weights)): 
             for (x,y), _ in np.nd_enumerate(self.layer_weight[layer]):
                 layer_wts_cp = copy.deepcopy(self.layer_weights) 
                 layer_wts_cp[layer][x][y] += EPS
-                cost_1 = cost(layer_wts_cp)
+                cost_1 = logistic_cost(layer_wts_cp)
                 layer_wts_cp[layer][x][x] -= 2 * EPS
-                cost_2 = cost(layer_wts_cp)
+                cost_2 = logistic_cost(layer_wts_cp)
                 grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
 
         # calculate gradient using back propagation
@@ -127,6 +131,7 @@ class network:
 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(grad, derv)]
+        print max(diff)
         return max(diff) < 0.001
 
     def __update_weights(self, p_derivs, learning_rate):
@@ -146,7 +151,7 @@ class network:
            p_derivs = self.__derivatives(X[ind], Y[ind],)
            self.__update_weights(p_derivs, learning_rate)
            if ind%100 == 0:
-               print "Iterations completed: ", ind+1
+               print "Iterations completed: ", ind + 1
 
     def train(self, X, Y, hidden_units, layer_weights = None):
         '''
@@ -155,10 +160,10 @@ class network:
         provided use random weights to initialize the network. Also, the
         training data is assumed to be randomly shuffled already.
         '''
-        n_classes = np.unique(Y).size
         X = self.__extend_for_bias(X)
         Y = self.__get_indicator_vector(Y)
         n_examples, n_features = X.shape
+        n_classes, _ = Y.shape
 
         # initialize network
         if layer_weights == None:self.__random_init(n_features, n_classes,
@@ -189,4 +194,14 @@ class network:
             pickle.dump(self.layer_weights, open(filepath,'wb'))
             return true
         else: return false
-        
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = 'Check backprop gradient \
+            computation by comparing with numerically computed gradient ')
+    parser.add_argument('data_file', help = 'data file containing feature and \
+            labels')
+    args = parser.parse_args()
+    nnet = network('logistic')
+    data = pickle.load(open(args.data_file)) 
+    assert nnet.check_gradient(data['X'], data['Y']), 'Incorrect gradient!'
+
