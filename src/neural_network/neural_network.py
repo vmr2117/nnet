@@ -115,12 +115,13 @@ class network:
         EPS = 10e-4
         grad = [np.empty_like(weights) for weights in theta]
         for layer in range(len(theta)): 
-            for (x,y), _ in np.nd_enumerate(theta[layer]):
+            for (x,y), _ in np.ndenumerate(theta[layer]):
                 layer_wts_cp = copy.deepcopy(theta) 
                 layer_wts_cp[layer][x][y] += EPS
-                cost_1 = logistic_cost(layer_wts_cp)
-                layer_wts_cp[layer][x][x] -= 2 * EPS
-                cost_2 = logistic_cost(layer_wts_cp)
+                cost_1 = logistic_cost(Y, self.predict(X, layer_wts_cp))
+                layer_wts_cp = copy.deepcopy(theta) 
+                layer_wts_cp[layer][x][x] -= EPS
+                cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp))
                 grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
 
         # calculate gradient using back propagation
@@ -184,18 +185,19 @@ class network:
         
     def predict(self, X, theta):
         '''
-        Predict the classes based using the weights of the neural network theta.
+        Predict the activations obtained for all classes under the current
+        model.
 
-        Return: pred_y - predicted classes under the given weights theta
+        Return: acvt - matrix of activations for each example under the weights
+                theta.
         '''
         # add extra feature for bias
         X = self.__extend_for_bias(X)
         r, _ = X.shape
-        pred_y = np.empty(r, dtype=int)
+        actv = np.empty(r, dtype=int)
         for row in range(r):
-            activations = self.__fwd_prop(X[row], theta)[-1]
-            pred_y[row] = np.argmax(activations)
-        return pred_y
+            actv[row] = self.__fwd_prop(X[row], theta)[-1]
+        return actv
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
