@@ -81,7 +81,7 @@ class network:
             wt = theta[layer_ind]
             act = activation[layer_ind - 1]
             next_layer_err = errors[-1]
-            errors.append(np.multiply(np.dot(wt.T, next_layer_err),
+            errors.append(np.multiply(np.dot(next_layer_err, wt),
                 self.actv_der(act))) 
         errors.reverse()
         return errors
