@@ -5,6 +5,7 @@ import argparse
 import copy
 import cPickle as pickle
 import numpy as np
+import time
 
 from activation_functions import get_actv_func
 from cost_functions import logistic_cost
@@ -60,7 +61,6 @@ class network:
         # calculate activations at hidden layer and output layers
         for ind, l_wt in enumerate(theta):
             activation.append(self.actv(np.dot(l_wt, activation[ind]))) 
-
         return activation
              
     def __back_prop(self, activation, y, theta):
@@ -109,8 +109,16 @@ class network:
         _, n_features = X.shape
         n_classes = np.unique(Y).size
         Y = self.__get_indicator_vector(Y)
-
         theta = self.__random_weights(n_features, n_classes, hidden_units)
+
+        # calculate gradient using back propagation
+        s = time.time()
+        derv = [np.zeros_like(weights) for weights in theta]
+        for row in range(X.shape[0]):
+            derv_c = self.__derivatives(X[row], Y[row], theta)
+            for i in range(len(derv)): derv[i] += derv_c[i]
+        print "backprop derivatives computed - ", time.time() - s, "secs" 
+
         # calculate gradient numerically
         EPS = 10e-4
         grad = [np.empty_like(weights) for weights in theta]
@@ -123,15 +131,6 @@ class network:
                 layer_wts_cp[layer][x][y] -= EPS
                 cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
                 grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
-
-        # calculate gradient using back propagation
-        r, _ = X.shape
-
-        # calculate gradient using back propagation
-        derv = [np.zeros_like(weights) for weights in theta]
-        for row in range(r):
-            derv_c = self.__derivatives(X[row], Y[row], theta)
-            for i in range(len(derv)): derv[i] += derv_c[i]
 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(grad, derv)]
@@ -191,12 +190,11 @@ class network:
         Return: acvt - matrix of activations for each example under the weights
                 theta.
         '''
-        # add extra feature for bias
         if add_bias: X = self.__extend_for_bias(X)
         r, _ = X.shape
-        actv = np.concatenate(([np.atleast_2d(self.__fwd_prop(X[row],
-                                              theta)[-1]) 
-                                              for row in range(r)]), axis = 0)
+        n_classes, _ = theta[-1].shape
+        actv = np.empty([r, n_classes])
+        for row in range(r): actv[row, :] = self.__fwd_prop(X[row], theta)[-1]
         return actv
 
 if __name__ == '__main__':
