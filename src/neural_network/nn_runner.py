@@ -19,7 +19,7 @@ def test(data_file, actv, model_file):
     theta = pickle.load(open(model_file))
     data = pickle.load(open(data_file))
     actv = nnet.predict(data['X'], theta)
-    pred_y = np.argmax(actv)
+    pred_y = np.argmax(actv, axis = 1)
     print np.sum(pred_y == data['Y']) * 1.0 / data['Y'].size
 
 

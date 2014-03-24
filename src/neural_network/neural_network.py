@@ -57,10 +57,11 @@ class network:
         activations at each stage. The first activation entry is always the
         input itself.
         '''
-        activation = [x]
+        activation = [x.T]
         # calculate activations at hidden layer and output layers
         for ind, l_wt in enumerate(theta):
             activation.append(self.actv(np.dot(l_wt, activation[ind]))) 
+        for ind in range(len(activation)): activation[ind] = activation[ind].T
         return activation
              
     def __back_prop(self, activation, y, theta):
@@ -120,6 +121,7 @@ class network:
         print "backprop derivatives computed - ", time.time() - s, "secs" 
 
         # calculate gradient numerically
+        s = time.time()
         EPS = 10e-4
         grad = [np.empty_like(weights) for weights in theta]
         for layer in range(len(theta)): 
@@ -131,6 +133,7 @@ class network:
                 layer_wts_cp[layer][x][y] -= EPS
                 cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
                 grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
+        print "numeric derivatives computed - ", time.time() - s, "secs" 
 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(grad, derv)]
@@ -193,8 +196,7 @@ class network:
         if add_bias: X = self.__extend_for_bias(X)
         r, _ = X.shape
         n_classes, _ = theta[-1].shape
-        actv = np.empty([r, n_classes])
-        for row in range(r): actv[row, :] = self.__fwd_prop(X[row], theta)[-1]
+        actv = self.__fwd_prop(X, theta)[-1]
         return actv
 
 if __name__ == '__main__':
