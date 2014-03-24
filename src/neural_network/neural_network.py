@@ -118,10 +118,10 @@ class network:
             for (x,y), _ in np.ndenumerate(theta[layer]):
                 layer_wts_cp = copy.deepcopy(theta) 
                 layer_wts_cp[layer][x][y] += EPS
-                cost_1 = logistic_cost(Y, self.predict(X, layer_wts_cp))
+                cost_1 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
                 layer_wts_cp = copy.deepcopy(theta) 
-                layer_wts_cp[layer][x][x] -= EPS
-                cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp))
+                layer_wts_cp[layer][x][y] -= EPS
+                cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
                 grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
 
         # calculate gradient using back propagation
@@ -158,7 +158,7 @@ class network:
                print "Iterations completed: ", ind + 1
         print "Iterations completed: ", ind
 
-    def train(self, X, Y, hidden_units = None, theta = None):
+    def train(self, X, Y, hidden_units = None, theta = None, add_bias = True):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
@@ -170,7 +170,7 @@ class network:
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
 
-        X = self.__extend_for_bias(X)
+        if add_bias: X = self.__extend_for_bias(X)
         Y = self.__get_indicator_vector(Y)
         n_examples, n_features = X.shape
         _, n_classes = Y.shape
@@ -183,7 +183,7 @@ class network:
         self.__sgd(X, Y, theta)
         return theta
         
-    def predict(self, X, theta):
+    def predict(self, X, theta, add_bias = True):
         '''
         Predict the activations obtained for all classes under the current
         model.
@@ -192,11 +192,11 @@ class network:
                 theta.
         '''
         # add extra feature for bias
-        X = self.__extend_for_bias(X)
+        if add_bias: X = self.__extend_for_bias(X)
         r, _ = X.shape
-        actv = np.empty(r, dtype=int)
-        for row in range(r):
-            actv[row] = self.__fwd_prop(X[row], theta)[-1]
+        actv = np.concatenate(([np.atleast_2d(self.__fwd_prop(X[row],
+                                              theta)[-1]) 
+                                              for row in range(r)]), axis = 0)
         return actv
 
 if __name__ == '__main__':
@@ -207,5 +207,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     nnet = network('logistic')
     data = pickle.load(open(args.data_file)) 
-    assert nnet.check_gradient(data['X'], data['Y']), 'Incorrect gradient!'
+    assert nnet.check_gradient(data['X'], data['Y'], hidden_units = 10), 'Incorrect gradient!'
 
