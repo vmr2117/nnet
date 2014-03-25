@@ -129,7 +129,7 @@ class network:
 
         # calculate gradient numerically
         s = time.time()
-        EPS = 10e-4
+        EPS = 10e-5
         grad = [np.empty_like(weights) for weights in theta]
         for layer in range(len(theta)): 
             for (x,y), value in np.ndenumerate(theta[layer]):
@@ -143,8 +143,9 @@ class network:
    
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(grad, derv)]
+        pickle.dump([grad, derv], open('test_log','wb'))
         print max(diff)
-        return max(diff) < 0.03
+        return max(diff) < 0.0001
 
     def __update_weights(self, p_derivs, learning_rate, theta):
         '''
@@ -213,6 +214,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     nnet = network('logistic')
     data = pickle.load(open(args.data_file)) 
+    np.random.seed(19) #seed
     assert nnet.check_gradient(data['X'], data['Y'], hidden_units = 10), \
     'Incorrect gradient!'
+    print 'Gradient check passed'
 
