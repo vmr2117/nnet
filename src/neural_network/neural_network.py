@@ -14,6 +14,26 @@ class network:
     def __init__(self, actv_func):
         self.actv, self.actv_der = get_actv_func(actv_func)
 
+    def __get_indicator_vector(self, Y):
+        '''
+        Converts Y into a matrix of indicator vectors.
+
+        Return: new_Y - indicator matrix for the vector Y.
+        '''
+        n_classes = np.unique(Y).size
+        new_Y = np.zeros((Y.size, n_classes), dtype=int)
+        new_Y[np.array(range(Y.size)), Y] = 1
+        return new_Y
+
+    def __extend_for_bias(self, X):
+        '''
+        Extends the feature matrix to add bias.
+
+        Return: X - feature matrix with bias variable.
+        '''
+        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
+        return X
+
     def __random_weights(self, n_features, n_classes, hidden_units):
         '''
         Initializes weights for 1 hidden layer neural network architecture.
@@ -34,26 +54,6 @@ class network:
         theta.append(weights)
 
         return theta
-
-    def __get_indicator_vector(self, Y):
-        '''
-        Converts Y into a matrix of indicator vectors.
-
-        Return: new_Y - indicator matrix for the vector Y.
-        '''
-        n_classes = np.unique(Y).size
-        new_Y = np.zeros((Y.size, n_classes), dtype=int)
-        new_Y[np.array(range(Y.size)), Y] = 1
-        return new_Y
-
-    def __extend_for_bias(self, X):
-        '''
-        Extends the feature matrix to add bias.
-
-        Return: X - feature matrix with bias variable.
-        '''
-        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
-        return X
 
     def __fwd_prop(self, x, theta):
         '''
@@ -104,7 +104,21 @@ class network:
         p_derivs = [np.outer(deltas[layer], activation[layer]) for layer in
                 range(0, len(activation) - 1)] 
         return p_derivs
-    
+ 
+    def __backprop_full_gradient(self, theta, X, Y):
+        '''
+        Computes the gradient of the cost function using all the samples in X, Y
+
+        Return: grad - full gradient computes using back propagation.
+        '''
+        n_examples, _ = X.shape
+        grad = [np.zeros_like(weights) for weights in theta]
+        for row in range(X.shape[0]):
+            derv_c = self.__derivatives(X[row], Y[row], theta)
+            for i in range(len(grad)): grad[i] += derv_c[i]
+        for i in range(len(grad)): grad[i] /= n_examples
+        return derv
+   
     def __numerical_gradient(self, theta, X, Y):
         '''
         Computes numerical gradient of the logistic cost function with respect
@@ -125,39 +139,6 @@ class network:
                 grad[layer][x][y] = (cost_1 - cost_2) / (2 * EPS)
         return grad
 
-    def __backprop_full_gradient(self, theta, X, Y):
-        '''
-        Computes the gradient of the cost function using all the samples in X
-
-        Return: grad - full gradient computes using back propagation.
-        '''
-        n_examples, _ = X.shape
-        grad = [np.zeros_like(weights) for weights in theta]
-        for row in range(X.shape[0]):
-            derv_c = self.__derivatives(X[row], Y[row], theta)
-            for i in range(len(grad)): grad[i] += derv_c[i]
-        for i in range(len(grad)): grad[i] /= n_examples
-        return derv
-
-    def check_gradient(self, X, Y, hidden_units = 100):
-        '''
-        Checks gradients computed by back propagation.
-        
-        Return: True/False - True if the gradients computed by back_prop are
-                within 0.001 of the numerically computed gradients.
-        '''
-        X = self.__extend_for_bias(X)
-        _, n_features = X.shape
-        n_classes = np.unique(Y).size
-        Y = self.__get_indicator_vector(Y)
-        theta = self.__random_weights(n_features, n_classes, hidden_units)
-        bprop_grad = self.__backprop_full_gradient(theta, X, Y)
-        num_grad = self.__numerical_gradient(theta, X, Y) 
-        diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
-                zip(num_grad, bprop_grad)]
-        print max(diff)
-        return max(diff) < 0.0001
-
     def __update_weights(self, p_derivs, learning_rate, theta):
         '''
         Updates the current weights using the given partial derivatives and the
@@ -177,6 +158,25 @@ class network:
            if ind % 100 == 0:
                print "Iterations completed: ", ind + 1
         print "Iterations completed: ", ind
+
+    def check_gradient(self, X, Y, hidden_units = 100):
+        '''
+        Checks gradients computed by back propagation.
+        
+        Return: True/False - True if the gradients computed by back_prop are
+                within 0.001 of the numerically computed gradients.
+        '''
+        X = self.__extend_for_bias(X)
+        _, n_features = X.shape
+        n_classes = np.unique(Y).size
+        Y = self.__get_indicator_vector(Y)
+        theta = self.__random_weights(n_features, n_classes, hidden_units)
+        bprop_grad = self.__backprop_full_gradient(theta, X, Y)
+        num_grad = self.__numerical_gradient(theta, X, Y) 
+        diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
+                zip(num_grad, bprop_grad)]
+        print max(diff)
+        return max(diff) < 0.0001
 
     def train(self, X, Y, hidden_units = None, theta = None, add_bias = True):
         '''
@@ -222,11 +222,14 @@ if __name__ == '__main__':
             computation by comparing with numerically computed gradient ')
     parser.add_argument('data_file', help = 'data file containing feature and \
             labels')
+    parser.add_Argument('hidden_units', help = 'number of hidden units -should \
+                         be a multiple of the number of classes in the data \
+                         set', type = int)
     args = parser.parse_args()
     nnet = network('logistic')
     data = pickle.load(open(args.data_file)) 
     np.random.seed(19) #seed
-    assert nnet.check_gradient(data['X'], data['Y'], hidden_units = 10), \
-    'Incorrect gradient!'
+    assert nnet.check_gradient(data['X'], data['Y'], args.hidden_units), \
+                                                    'Incorrect gradient!'
     print 'Gradient check passed'
 
