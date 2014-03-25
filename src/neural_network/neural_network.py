@@ -104,30 +104,14 @@ class network:
         p_derivs = [np.outer(deltas[layer], activation[layer]) for layer in
                 range(0, len(activation) - 1)] 
         return p_derivs
-
-    def check_gradient(self, X, Y, hidden_units = 100):
+    
+    def __numerical_gradient(self, theta, X, Y):
         '''
-        Checks gradients computed by back propagation.
-        
-        Return: True/False - True if the gradients computed by back_prop are
-                within 0.001 of the numerically computed gradients.
+        Computes numerical gradient of the logistic cost function with respect
+        to the parameters in theta.
+
+        Return: grad - numerically computed gradient.
         '''
-        X = self.__extend_for_bias(X)
-        n_examples, n_features = X.shape
-        n_classes = np.unique(Y).size
-        Y = self.__get_indicator_vector(Y)
-        theta = self.__random_weights(n_features, n_classes, hidden_units)
-
-        # calculate gradient using back propagation
-        s = time.time()
-        derv = [np.zeros_like(weights) for weights in theta]
-        for row in range(X.shape[0]):
-            derv_c = self.__derivatives(X[row], Y[row], theta)
-            for i in range(len(derv)): derv[i] += derv_c[i]
-        for i in range(len(derv)): derv[i] /= n_examples
-        print "backprop derivatives computed - ", time.time() - s, "secs" 
-
-        # calculate gradient numerically
         s = time.time()
         EPS = 10e-5
         grad = [np.empty_like(weights) for weights in theta]
@@ -139,11 +123,38 @@ class network:
                 layer_wts_cp[layer][x][y] = value - EPS
                 cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
                 grad[layer][x][y] = (cost_1 - cost_2) / (2 * EPS)
-        print "numeric derivatives computed - ", time.time() - s, "secs" 
-   
+        return grad
+
+    def __backprop_full_gradient(self, theta, X, Y):
+        '''
+        Computes the gradient of the cost function using all the samples in X
+
+        Return: grad - full gradient computes using back propagation.
+        '''
+        n_examples, _ = X.shape
+        grad = [np.zeros_like(weights) for weights in theta]
+        for row in range(X.shape[0]):
+            derv_c = self.__derivatives(X[row], Y[row], theta)
+            for i in range(len(grad)): grad[i] += derv_c[i]
+        for i in range(len(grad)): grad[i] /= n_examples
+        return derv
+
+    def check_gradient(self, X, Y, hidden_units = 100):
+        '''
+        Checks gradients computed by back propagation.
+        
+        Return: True/False - True if the gradients computed by back_prop are
+                within 0.001 of the numerically computed gradients.
+        '''
+        X = self.__extend_for_bias(X)
+        _, n_features = X.shape
+        n_classes = np.unique(Y).size
+        Y = self.__get_indicator_vector(Y)
+        theta = self.__random_weights(n_features, n_classes, hidden_units)
+        bprop_grad = self.__backprop_full_gradient(theta, X, Y)
+        num_grad = self.__numerical_gradient(theta, X, Y) 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
-                zip(grad, derv)]
-        pickle.dump([grad, derv], open('test_log','wb'))
+                zip(num_grad, bprop_grad)]
         print max(diff)
         return max(diff) < 0.0001
 
