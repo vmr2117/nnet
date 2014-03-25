@@ -64,8 +64,8 @@ class network:
         '''
         activation = [x.T]
         # calculate activations at hidden layer and output layers
-        for ind, l_wt in enumerate(theta):
-            activation.append(self.actv(np.dot(l_wt, activation[ind]))) 
+        for l_wt in theta:
+            activation.append(self.actv(np.dot(l_wt, activation[-1]))) 
         for ind in range(len(activation)): activation[ind] = activation[ind].T
         return activation
              
