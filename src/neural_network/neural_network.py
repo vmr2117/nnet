@@ -51,7 +51,6 @@ class network:
         weights = np.zeros((n_classes, hidden_units))
         weights[row_inds, col_inds] = np.random.rand(hidden_units) - 0.5
         theta.append(weights) # theta 2 - maps hidden layer to output layer
-
         return theta
 
     def __fwd_prop(self, x, theta):
@@ -174,6 +173,9 @@ class network:
         num_grad = self.__numerical_gradient(theta, X, Y) 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(num_grad, bprop_grad)]
+        print np.amax(np.absolute(bprop_grad[0] - num_grad[0]))
+        print bprop_grad[0]
+        print num_grad[0]
         print max(diff)
         return max(diff) < 0.0001
 
