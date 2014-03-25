@@ -43,15 +43,14 @@ class network:
         ''' 
         theta = []
         theta.append(np.random.rand(hidden_units, n_features) -
-                0.5) 
-
+                0.5) # theta 1 - maps input layer to hidden layer
         col_inds = np.arange(hidden_units).reshape((n_classes,-1),
                 order='F').reshape((-1,)) 
         row_inds =np.tile(np.arange(n_classes),(hidden_units/n_classes,
                 1)).T.reshape(-1) 
         weights = np.zeros((n_classes, hidden_units))
         weights[row_inds, col_inds] = np.random.rand(hidden_units) - 0.5
-        theta.append(weights)
+        theta.append(weights) # theta 2 - maps hidden layer to output layer
 
         return theta
 
@@ -117,7 +116,7 @@ class network:
             derv_c = self.__derivatives(X[row], Y[row], theta)
             for i in range(len(grad)): grad[i] += derv_c[i]
         for i in range(len(grad)): grad[i] /= n_examples
-        return derv
+        return grad
    
     def __numerical_gradient(self, theta, X, Y):
         '''
@@ -222,7 +221,7 @@ if __name__ == '__main__':
             computation by comparing with numerically computed gradient ')
     parser.add_argument('data_file', help = 'data file containing feature and \
             labels')
-    parser.add_Argument('hidden_units', help = 'number of hidden units -should \
+    parser.add_argument('hidden_units', help = 'number of hidden units -should \
                          be a multiple of the number of classes in the data \
                          set', type = int)
     args = parser.parse_args()
