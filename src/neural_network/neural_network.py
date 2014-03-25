@@ -125,14 +125,13 @@ class network:
         EPS = 10e-4
         grad = [np.empty_like(weights) for weights in theta]
         for layer in range(len(theta)): 
-            for (x,y), _ in np.ndenumerate(theta[layer]):
+            for (x,y), value in np.ndenumerate(theta[layer]):
                 layer_wts_cp = copy.deepcopy(theta) 
-                layer_wts_cp[layer][x][y] += EPS
+                layer_wts_cp[layer][x][y] = value + EPS
                 cost_1 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
-                layer_wts_cp = copy.deepcopy(theta) 
-                layer_wts_cp[layer][x][y] -= EPS
+                layer_wts_cp[layer][x][y] = value - EPS
                 cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
-                grad[layer][x][y] = (cost_1 - cost_2) / 2 * EPS 
+                grad[layer][x][y] = (cost_1 - cost_2) / (2 * EPS)
         print "numeric derivatives computed - ", time.time() - s, "secs" 
 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
