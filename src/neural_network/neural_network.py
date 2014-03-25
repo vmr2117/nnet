@@ -113,7 +113,7 @@ class network:
                 within 0.001 of the numerically computed gradients.
         '''
         X = self.__extend_for_bias(X)
-        _, n_features = X.shape
+        n_examples, n_features = X.shape
         n_classes = np.unique(Y).size
         Y = self.__get_indicator_vector(Y)
         theta = self.__random_weights(n_features, n_classes, hidden_units)
@@ -124,6 +124,7 @@ class network:
         for row in range(X.shape[0]):
             derv_c = self.__derivatives(X[row], Y[row], theta)
             for i in range(len(derv)): derv[i] += derv_c[i]
+        for i in range(len(derv)): derv[i] /= n_examples
         print "backprop derivatives computed - ", time.time() - s, "secs" 
 
         # calculate gradient numerically
@@ -139,11 +140,11 @@ class network:
                 cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
                 grad[layer][x][y] = (cost_1 - cost_2) / (2 * EPS)
         print "numeric derivatives computed - ", time.time() - s, "secs" 
-
+   
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(grad, derv)]
         print max(diff)
-        return max(diff) < 0.001
+        return max(diff) < 0.03
 
     def __update_weights(self, p_derivs, learning_rate, theta):
         '''
@@ -151,7 +152,7 @@ class network:
         learning rate.
         '''
         for layer in range(len(theta)): 
-            theta[layer] -=  p_derivs[layer]
+            theta[layer] -=  learning_rate * p_derivs[layer]
 
     def __sgd(self, X, Y, theta, epochs = 70000, learning_rate = 1.0):
         '''
@@ -160,7 +161,7 @@ class network:
         '''
         for ind in range(X.shape[0]):
            p_derivs = self.__derivatives(X[ind], Y[ind], theta)
-           self.__update_weights(p_derivs, learning_rate, theta)
+           self.__update_weights(p_derivs, 1.0 , theta)
            if ind % 100 == 0:
                print "Iterations completed: ", ind + 1
         print "Iterations completed: ", ind
@@ -212,5 +213,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     nnet = network('logistic')
     data = pickle.load(open(args.data_file)) 
-    assert nnet.check_gradient(data['X'], data['Y'], hidden_units = 10), 'Incorrect gradient!'
+    assert nnet.check_gradient(data['X'], data['Y'], hidden_units = 10), \
+    'Incorrect gradient!'
 
