@@ -56,26 +56,32 @@ class network:
     def __feed_forward(self, X, theta):
         '''
         Feed forward the input X through the network with weights theta and
-        return the output z values at each layer : input, hidden and output.
+        return the output z and activations at each layer: input, hidden and
+        output.
 
-        Return: Z - list of z values at each stage
+        Return: Z, activations - list of z values and activations
         '''
         Z = [X.T]
-        for ind, l_wt in enumerate(theta): 
-            a = self.actv(Z[-1])
-            if ind == 0: a = Z[-1] # for first layer activation are inputs.
-            Z.append(np.dot(l_wt, a))
-        for ind, z in enumerate(Z): Z[ind] = z.T
-        return Z 
+        activations = [X.T]
+        for l_wt in theta: 
+            Z.append(np.dot(l_wt, activations[-1]))
+            activations.append(self.actv(Z[-1]))
 
-    def __back_propagate(self, Z, Y, theta):
+        for ind in range(len(Z)): 
+            Z[ind] = Z[ind].T
+            activations[ind] = activations[ind].T
+
+        return (Z, activations) 
+
+    def __back_propagate(self, Z, error, theta):
         '''
-        Calculates errors at all layers using back propagation.
+        Calculates errors at all hidden layers using the error at output layer,
+        Z and current network weights theta.
 
         Returns: errors - errors on all hidden and output layers.
         '''
         n_layers = len(theta) + 1
-        errors = [self.actv(Z[-1]) - Y]
+        errors = [error]
 
         # compute errors on hidden layers from o/p to i/p direction
         for ind in range(n_layers - 2):
@@ -87,31 +93,31 @@ class network:
                 self.actv_der(z))) 
         return list(reversed(errors))
 
-    def __derivatives(self, x, y, theta):
+    def __get_derivative(self, x, y, theta):
         '''
-        Calculates the partial derivatives at given a given sample (x, y)
+        Estimates the partial derivatives at given a given sample (x, y) using
+        back propagation algorithm.
 
         Return: partial derivatives of cost function w.r.t theta evaluated on
                 the sample (x, y)
         '''
-        Z = self.__feed_forward(x, theta)
-        deltas = self.__back_propagate(Z, y, theta)
-        activations = [Z[0]] + [self.actv(Z[layer])
-                                for layer in range(1, len(Z)-1) ]
+        Z, activations = self.__feed_forward(x, theta)
+        deltas = self.__back_propagate(Z, activations[-1] - y, theta)
         p_derivs = [np.outer(deltas[layer], activations[layer]) 
-                                            for layer in range(0, len(Z) - 1)] 
+                                    for layer in range(0, len(activations) - 1)] 
         return p_derivs
  
-    def __backprop_full_gradient(self, theta, X, Y):
+    def __full_gradient(self, theta, X, Y):
         '''
-        Computes the gradient of the cost function using all the samples in X, Y
+        Computes the averaged gradient of the cost function at all the samples
+        in (X, Y) using back propagation.
 
-        Return: grad - full gradient computes using back propagation.
+        Return: grad - averaged gradient evaluated on all samples in (X, Y) 
         '''
         n_examples, _ = X.shape
         grad = [np.zeros_like(weights) for weights in theta]
         for row in range(X.shape[0]):
-            derv_c = self.__derivatives(X[row], Y[row], theta)
+            derv_c = self.__get_derivative(X[row], Y[row], theta)
             for i in range(len(grad)): grad[i] += derv_c[i]
         for i in range(len(grad)): grad[i] /= n_examples
         return grad
@@ -168,11 +174,10 @@ class network:
         n_classes = np.unique(Y).size
         Y = self.__get_indicator_vector(Y)
         theta = self.__random_weights(n_features, n_classes, hidden_units)
-        bprop_grad = self.__backprop_full_gradient(theta, X, Y)
+        bprop_grad = self.__full_gradient(theta, X, Y)
         num_grad = self.__numerical_gradient(theta, X, Y) 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(num_grad, bprop_grad)]
-        print max(diff)
         return max(diff) < 10e-8
 
     def train(self, X, Y, hidden_units = None, theta = None, add_bias = True):
@@ -211,8 +216,8 @@ class network:
         if add_bias: X = self.__extend_for_bias(X)
         r, _ = X.shape
         n_classes, _ = theta[-1].shape
-        actv = self.actv(self.__feed_forward(X, theta)[-1])
-        return actv
+        _, actv = self.__feed_forward(X, theta)
+        return actv[-1]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
