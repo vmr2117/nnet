@@ -136,9 +136,9 @@ class network:
             for (x,y), value in np.ndenumerate(theta[layer]):
                 layer_wts_cp = copy.deepcopy(theta) 
                 layer_wts_cp[layer][x][y] = value + EPS
-                cost_1 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
+                cost_1 = logistic_cost(Y, self.__predict(X, layer_wts_cp, False))
                 layer_wts_cp[layer][x][y] = value - EPS
-                cost_2 = logistic_cost(Y, self.predict(X, layer_wts_cp, False))
+                cost_2 = logistic_cost(Y, self.__predict(X, layer_wts_cp, False))
                 grad[layer][x][y] = (cost_1 - cost_2) / (2 * EPS)
         return grad
 
@@ -160,8 +160,10 @@ class network:
            p_derivs = self.__get_derivative(X[ind], Y[ind], theta)
            self.__update_weights(p_derivs, 0.01 , theta)
            if epoch % 1000 == 0:
-               print 'Iteration:', epoch, 'Accuracy:', self.evaluate(X_vd, Y_vd,
-                       theta) 
+               vd_acc = self.evaluate(X_vd, Y_vd, theta)
+               tr_cost = logistic_cost(Y, self.__predict(X, theta, False))
+               print 'Iteration:', epoch, 'Validation Accuracy:', vd_acc, \
+                     'Training cost:', tr_cost
         print "Iterations completed: ", epoch + 1
 
     def check_gradient(self, X, Y, hidden_units = 100):
