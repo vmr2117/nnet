@@ -154,17 +154,22 @@ class network:
         '''
         Performs stochastic gradient descent on the dataset X,Y for the given
         number of epochs using the given learning rate.
+
+        Return: cost_err - list of training cost and validation error
         '''
+        cost_err = {}
         for epoch in range(1000000):
            ind = epoch % X.shape[0]
            p_derivs = self.__get_derivative(X[ind], Y[ind], theta)
            self.__update_weights(p_derivs, 0.01 , theta)
            if epoch % 1000 == 0:
-               vd_acc = self.evaluate(X_vd, Y_vd, theta)
+               vd_err = self.evaluate(X_vd, Y_vd, theta)
                tr_cost = logistic_cost(Y, self.__predict(X, theta, False))
-               print 'Iteration:', epoch, 'Validation Accuracy:', vd_acc, \
-                     'Training cost:', tr_cost
+               cost_err[epoch] = (tr_cost, vd_err)
+               print 'Iteration:', epoch, 'Validation Error:', vd_err, \
+                     'Training Cost:', tr_cost
         print "Iterations completed: ", epoch + 1
+        return cost_err
 
     def check_gradient(self, X, Y, hidden_units = 100):
         '''
@@ -191,7 +196,8 @@ class network:
         parameter and generates weights theta randomly. Training data is assumed
         to be randomly shuffled already. 
 
-        Return: theta - final weights of the network
+        Return: cost_err - list of training cost and validation error
+                theta - final weights of the network
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
@@ -211,8 +217,8 @@ class network:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
 
         # train
-        self.__sgd(X, Y, X_vd, Y_vd, theta)
-        return theta
+        cost_err = self.__sgd(X, Y, X_vd, Y_vd, theta)
+        return cost_err, theta
         
     def __predict(self, X, theta, add_bias = True):
         '''
@@ -230,14 +236,14 @@ class network:
 
     def evaluate(self, X, Y, theta):
         '''
-        Evaluates the accuracy of the network with weights theta by testing on
+        Evaluates the error of the network with weights theta by testing on
         samples (X, Y) 
 
-        Return: acc - the accuracy of the network on the given data (X, Y)
+        Return: err - the error of the network on the given data (X, Y)
         '''
-        acc = (np.sum(Y == np.argmax(self.__predict(X, theta), axis = 1)) 
+        err = (np.sum(Y != np.argmax(self.__predict(X, theta), axis = 1)) 
                / (1.0 * X.shape[0]))
-        return acc
+        return err
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \

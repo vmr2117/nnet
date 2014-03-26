@@ -7,12 +7,27 @@ import numpy as np
 import sys
 
 from neural_network import network
+from pylab import *
 
-def train(data_file, actv, n_hidden_units, model_file, init_wts = None):
+def train(data_file, actv, n_hidden_units, model_file, graph_figure_file,
+        init_wts = None): 
     nnet = network(actv)
     data = pickle.load(open(data_file))
-    theta = nnet.train(data['X'], data['Y'], n_hidden_units, init_wts)
+    cost_err, theta = nnet.train(data['X'], data['Y'], n_hidden_units, init_wts)
     pickle.dump(theta, open(model_file, 'wb'))
+    save_fig(cost_err, graph_figure)
+
+def save_fig(cost_err, file_name):
+    plot(cost_err.keys(), [cost_err[key][0] for key in cost_err.keys()], 'k--',
+            label = 'Training Cost')
+    plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'k:',
+            label = 'Validation Error')
+    xlabel('Iteration')
+    ylabel('Error and Cost')
+    title('Training cost and Validation Error')
+    grid(True)
+    savefig(filename)
+    show()
 
 def test(data_file, actv, model_file):
     nnet = network(actv)
@@ -56,7 +71,8 @@ if __name__ == '__main__':
     init_wts = None
     if args.init_wt_file: init_wts = pickle.load(open(args.init_wt_file))
     if args.cmd == 'train':
-        train(args.data_file, args.actv, args.hidden_units, args.model_file, init_wts)
+        train(args.data_file, args.actv, args.hidden_units, args.model_file,
+                'train.png', init_wts)
     elif args.cmd == 'test':
         test(args.data_file, args.actv, args.model_file)
 
