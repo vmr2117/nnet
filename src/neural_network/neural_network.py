@@ -150,17 +150,19 @@ class network:
         for layer in range(len(theta)): 
             theta[layer] -=  learning_rate * p_derivs[layer]
 
-    def __sgd(self, X, Y, theta, epochs = 70000, learning_rate = 1.0):
+    def __sgd(self, X, Y, X_vd, Y_vd, theta):
         '''
         Performs stochastic gradient descent on the dataset X,Y for the given
         number of epochs using the given learning rate.
         '''
-        for ind in range(X.shape[0]):
-           p_derivs = self.__derivatives(X[ind], Y[ind], theta)
-           self.__update_weights(p_derivs, 1.0 , theta)
-           if ind % 100 == 0:
-               print "Iterations completed: ", ind + 1
-        print "Iterations completed: ", ind
+        for epoch in range(1000000):
+           ind = epoch % X.shape[0]
+           p_derivs = self.__get_derivative(X[ind], Y[ind], theta)
+           self.__update_weights(p_derivs, 0.01 , theta)
+           if epoch % 1000 == 0:
+               print 'Iteration:', epoch, 'Accuracy:', self.evaluate(X_vd, Y_vd,
+                       theta) 
+        print "Iterations completed: ", epoch + 1
 
     def check_gradient(self, X, Y, hidden_units = 100):
         '''
@@ -191,6 +193,11 @@ class network:
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
+        validation_size = np.round(0.1 * Y.size)
+        X_vd = X[0:validation_size] 
+        Y_vd = Y[0:validation_size] 
+        X = X[validation_size:]
+        Y = Y[validation_size:]
 
         if add_bias: X = self.__extend_for_bias(X)
         Y = self.__get_indicator_vector(Y)
@@ -202,12 +209,12 @@ class network:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
 
         # train
-        self.__sgd(X, Y, theta)
+        self.__sgd(X, Y, X_vd, Y_vd, theta)
         return theta
         
-    def predict(self, X, theta, add_bias = True):
+    def __predict(self, X, theta, add_bias = True):
         '''
-        Predict the activations obtained for all classes under the current
+        Predicts the activations obtained for all classes under the current
         model.
 
         Return: acvt - matrix of activations for each example under the weights
@@ -218,6 +225,17 @@ class network:
         n_classes, _ = theta[-1].shape
         _, actv = self.__feed_forward(X, theta)
         return actv[-1]
+
+    def evaluate(self, X, Y, theta):
+        '''
+        Evaluates the accuracy of the network with weights theta by testing on
+        samples (X, Y) 
+
+        Return: acc - the accuracy of the network on the given data (X, Y)
+        '''
+        acc = (np.sum(Y == np.argmax(self.__predict(X, theta), axis = 1)) 
+               / (1.0 * X.shape[0]))
+        return acc
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
