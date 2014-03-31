@@ -136,9 +136,9 @@ class network:
             for (x,y), value in np.ndenumerate(theta[layer]):
                 layer_wts_cp = copy.deepcopy(theta) 
                 layer_wts_cp[layer][x][y] = value + EPS
-                cost_1 = logistic_cost(Y, self.__predict(X, layer_wts_cp, False))
+                cost_1 = logistic_cost(Y, self.__predict(X, layer_wts_cp))
                 layer_wts_cp[layer][x][y] = value - EPS
-                cost_2 = logistic_cost(Y, self.__predict(X, layer_wts_cp, False))
+                cost_2 = logistic_cost(Y, self.__predict(X, layer_wts_cp))
                 grad[layer][x][y] = (cost_1 - cost_2) / (2 * EPS)
         return grad
 
@@ -158,16 +158,16 @@ class network:
         Return: cost_err - list of training cost and validation error
         '''
         cost_err = {}
-        for epoch in range(1000000):
+        for epoch in range(100000):
            ind = epoch % X.shape[0]
            p_derivs = self.__get_derivative(X[ind], Y[ind], theta)
            self.__update_weights(p_derivs, 0.01 , theta)
            if epoch % 1000 == 0:
-               vd_err = self.evaluate(X_vd, Y_vd, theta)
-               tr_cost = logistic_cost(Y, self.__predict(X, theta, False))
-               cost_err[epoch] = (tr_cost, vd_err)
+               vd_err = self.evaluate(X_vd, Y_vd, theta, False)
+               tr_err = self.evaluate(X, Y, theta, False)
+               cost_err[epoch] = (tr_err, vd_err)
                print 'Iteration:', epoch, 'Validation Error:', vd_err, \
-                     'Training Cost:', tr_cost
+                     'Training Error:', tr_err
         print "Iterations completed: ", epoch + 1
         return cost_err
 
@@ -178,10 +178,9 @@ class network:
         Return: True/False - True if the gradients computed by back_prop are
                 within 0.001 of the numerically computed gradients.
         '''
-        X = self.__extend_for_bias(X)
+        X, Y = self.__massage_data(X, Y)
         _, n_features = X.shape
-        n_classes = np.unique(Y).size
-        Y = self.__get_indicator_vector(Y)
+        _, n_classes = Y.shape
         theta = self.__random_weights(n_features, n_classes, hidden_units)
         bprop_grad = self.__full_gradient(theta, X, Y)
         num_grad = self.__numerical_gradient(theta, X, Y) 
@@ -220,7 +219,7 @@ class network:
         cost_err = self.__sgd(X, Y, X_vd, Y_vd, theta)
         return cost_err, theta
         
-    def __predict(self, X, theta, add_bias = True):
+    def __predict(self, X, theta):
         '''
         Predicts the activations obtained for all classes under the current
         model.
@@ -228,22 +227,36 @@ class network:
         Return: acvt - matrix of activations for each example under the weights
                 theta.
         '''
-        if add_bias: X = self.__extend_for_bias(X)
         r, _ = X.shape
         n_classes, _ = theta[-1].shape
         _, actv = self.__feed_forward(X, theta)
         return actv[-1]
 
-    def evaluate(self, X, Y, theta):
+    def evaluate(self, X, Y, theta, massage_data = True):
         '''
         Evaluates the error of the network with weights theta by testing on
         samples (X, Y) 
 
         Return: err - the error of the network on the given data (X, Y)
         '''
+        if massage_data: X, _ = self.__massage_data(X, Y)
         err = (np.sum(Y != np.argmax(self.__predict(X, theta), axis = 1)) 
                / (1.0 * X.shape[0]))
         return err
+    
+    def __massage_data(X, Y):
+        '''
+        Adds a constant '1' feature to all the samples in X and converts the
+        target Y into a matrix of indicator vectors.
+
+        Return: X, Y - modified sample feature matrix and target indicator
+                vector.
+        '''
+        n_classes = np.unique(Y).size
+        new_Y = np.zeros((Y.size, n_classes), dtype=int)
+        new_Y[np.array(range(Y.size)), Y] = 1
+        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
+        return X, newY
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \

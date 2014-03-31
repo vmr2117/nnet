@@ -19,12 +19,12 @@ def train(data_file, actv, n_hidden_units, model_file, graph_figure_file,
 
 def save_fig(cost_err, file_name):
     plot(cost_err.keys(), [cost_err[key][0] for key in cost_err.keys()], 'g.',
-            label = 'Training Cost')
+            label = 'Training Error')
     plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'r.',
             label = 'Validation Error')
     xlabel('Iteration')
-    ylabel('Error and Cost')
-    title('Training cost and Validation Error')
+    ylabel('Error')
+    title('Training and Validation Error')
     legend()
     grid(True)
     savefig(file_name)
