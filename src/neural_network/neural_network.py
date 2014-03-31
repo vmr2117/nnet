@@ -11,28 +11,23 @@ from activation_functions import get_actv_func
 from cost_functions import logistic_cost
 
 class network:
-    def __init__(self, actv_func):
+    def __init__(self, actv_func, log = False):
         self.actv, self.actv_der = get_actv_func(actv_func)
+        self.log = log
 
-    def __get_indicator_vector(self, Y):
+    def __massage_data(self, X, Y):
         '''
-        Converts Y into a matrix of indicator vectors.
+        Adds a constant '1' feature to all the samples in X and converts the
+        target Y into a matrix of indicator vectors.
 
-        Return: new_Y - indicator matrix for the vector Y.
+        Return: X, Y - modified sample feature matrix and target indicator
+                vector.
         '''
         n_classes = np.unique(Y).size
         new_Y = np.zeros((Y.size, n_classes), dtype=int)
         new_Y[np.array(range(Y.size)), Y] = 1
-        return new_Y
-
-    def __extend_for_bias(self, X):
-        '''
-        Extends the feature matrix to add bias.
-
-        Return: X - feature matrix with bias variable.
-        '''
         X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
-        return X
+        return X, new_Y
 
     def __random_weights(self, n_features, n_classes, hidden_units):
         '''
@@ -93,7 +88,7 @@ class network:
                 self.actv_der(z))) 
         return list(reversed(errors))
 
-    def __get_derivative(self, x, y, theta):
+    def __gradient(self, x, y, theta):
         '''
         Estimates the partial derivatives at given a given sample (x, y) using
         back propagation algorithm.
@@ -117,7 +112,7 @@ class network:
         n_examples, _ = X.shape
         grad = [np.zeros_like(weights) for weights in theta]
         for row in range(X.shape[0]):
-            derv_c = self.__get_derivative(X[row], Y[row], theta)
+            derv_c = self.__gradient(X[row], Y[row], theta)
             for i in range(len(grad)): grad[i] += derv_c[i]
         for i in range(len(grad)): grad[i] /= n_examples
         return grad
@@ -158,18 +153,46 @@ class network:
         Return: cost_err - list of training cost and validation error
         '''
         cost_err = {}
-        for epoch in range(100000):
+        for epoch in range(1000000):
            ind = epoch % X.shape[0]
-           p_derivs = self.__get_derivative(X[ind], Y[ind], theta)
+           p_derivs = self.__gradient(X[ind], Y[ind], theta)
            self.__update_weights(p_derivs, 0.01 , theta)
            if epoch % 1000 == 0:
-               vd_err = self.evaluate(X_vd, Y_vd, theta, False)
-               tr_err = self.evaluate(X, Y, theta, False)
+               vd_err = self.__evaluate(X_vd, Y_vd, theta)
+               tr_err = self.__evaluate(X, Y, theta)
                cost_err[epoch] = (tr_err, vd_err)
+               if not log: continue
                print 'Iteration:', epoch, 'Validation Error:', vd_err, \
                      'Training Error:', tr_err
         print "Iterations completed: ", epoch + 1
         return cost_err
+
+        
+    def __predict(self, X, theta):
+        '''
+        Predicts the activations obtained for all classes under the current
+        model.
+
+        Return: acvt - matrix of activations for each example under the weights
+                theta.
+        '''
+        r, _ = X.shape
+        n_classes, _ = theta[-1].shape
+        _, actv = self.__feed_forward(X, theta)
+        return actv[-1]
+
+    def __evaluate(self, X, Y, theta):
+        '''
+        Evaluates the error of the network with weights theta by testing on
+        samples (X, Y). X should already have the bias constant for the samples
+        and Y should be a indicator vector.
+
+        Return: err - the error of the network on the given data (X, Y)
+        '''
+        err = (np.sum(np.argmax(Y, axis = 1) != np.argmax(self.__predict(X,
+               theta), axis = 1)) / (1.0 * X.shape[0]))
+        return err
+    
 
     def check_gradient(self, X, Y, hidden_units = 100):
         '''
@@ -188,7 +211,19 @@ class network:
                 zip(num_grad, bprop_grad)]
         return max(diff) < 10e-8
 
-    def train(self, X, Y, hidden_units = None, theta = None, add_bias = True):
+    def evaluate(self, X, Y, theta):
+        '''
+        Evaluates the error of the network with weights theta by testing on
+        samples (X, Y) 
+
+        Return: err - the error of the network on the given data (X, Y)
+        '''
+        if massage_data: X, _ = self.__massage_data(X, Y)
+        err = (np.sum(Y != np.argmax(self.__predict(X, theta), axis = 1)) 
+               / (1.0 * X.shape[0]))
+        return err
+
+    def train(self, X, Y, hidden_units = None, theta = None):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
@@ -200,14 +235,13 @@ class network:
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
-        validation_size = np.round(0.1 * Y.size)
+        X, Y = self.__massage_data(X, Y)
+        validation_size = np.round(0.1 * X.shape[0])
         X_vd = X[0:validation_size] 
         Y_vd = Y[0:validation_size] 
         X = X[validation_size:]
         Y = Y[validation_size:]
 
-        if add_bias: X = self.__extend_for_bias(X)
-        Y = self.__get_indicator_vector(Y)
         n_examples, n_features = X.shape
         _, n_classes = Y.shape
 
@@ -215,48 +249,8 @@ class network:
         if theta == None:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
 
-        # train
         cost_err = self.__sgd(X, Y, X_vd, Y_vd, theta)
         return cost_err, theta
-        
-    def __predict(self, X, theta):
-        '''
-        Predicts the activations obtained for all classes under the current
-        model.
-
-        Return: acvt - matrix of activations for each example under the weights
-                theta.
-        '''
-        r, _ = X.shape
-        n_classes, _ = theta[-1].shape
-        _, actv = self.__feed_forward(X, theta)
-        return actv[-1]
-
-    def evaluate(self, X, Y, theta, massage_data = True):
-        '''
-        Evaluates the error of the network with weights theta by testing on
-        samples (X, Y) 
-
-        Return: err - the error of the network on the given data (X, Y)
-        '''
-        if massage_data: X, _ = self.__massage_data(X, Y)
-        err = (np.sum(Y != np.argmax(self.__predict(X, theta), axis = 1)) 
-               / (1.0 * X.shape[0]))
-        return err
-    
-    def __massage_data(self, X, Y):
-        '''
-        Adds a constant '1' feature to all the samples in X and converts the
-        target Y into a matrix of indicator vectors.
-
-        Return: X, Y - modified sample feature matrix and target indicator
-                vector.
-        '''
-        n_classes = np.unique(Y).size
-        new_Y = np.zeros((Y.size, n_classes), dtype=int)
-        new_Y[np.array(range(Y.size)), Y] = 1
-        X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
-        return X, new_Y
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
