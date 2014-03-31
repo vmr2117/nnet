@@ -38,5 +38,6 @@ nosetests.xml
 # ml artifacts
 *.train
 *.test
+*.valid
 *.model
 *.weights
