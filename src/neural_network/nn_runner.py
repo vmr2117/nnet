@@ -24,7 +24,7 @@ def save_fig(cost_err, file_name):
 
     plot(cost_err.keys(), [cost_err[key][0] for key in cost_err.keys()], 'g^',
             label = 'Training Cost')
-    plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'ro',
+    plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'r*',
             label = 'Validation Error')
     xlabel('Iteration')
     ylabel('Error and Cost')
