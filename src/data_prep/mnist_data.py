@@ -10,7 +10,7 @@ from os import path
 from sklearn.datasets import fetch_mldata
 from sklearn.utils import shuffle
 
-def fetch_mnistdata(train_pct, classes):
+def fetch_mnistdata(trainsize, validsize, classes):
     '''
     Fetches mnist digits dataset for the given classes and splits the data into
     training and testing sets according to the trainsize percentage. The first
@@ -25,9 +25,11 @@ def fetch_mnistdata(train_pct, classes):
     target = target[np.logical_or.reduce([target == cls for cls in classes])]
     data, target = shuffle(data, target, random_state=34)
 
-    trainsize = int(len(target) * train_pct)
+    train_valid = trainsize + validsize
     return ({'X':data[:trainsize], 'Y':target[:trainsize]},   
-            {'X':data[trainsize:], 'Y':target[trainsize:]}) 
+            {'X':data[trainsize:train_valid],
+                'Y':target[trainsize:train_valid]},
+            {'X':data[train_valid:], 'Y':data[train_valid:]}) 
 
 def get_feat_string(data):
     return ' '.join([''.join([str(i),':',str(data[i])]) for i in range(data.size)
@@ -47,15 +49,20 @@ def write(data, data_dir, fmt, filename_suff=''):
     specifics of dataset like the number of classes etc. 
     '''
     tr_data = data[0]
-    ts_data = data[1]
+    vd_data = data[1]
+    ts_data = data[2]
     if fmt == 'numpy_array':
         pickle.dump(tr_data,
                     open(path.join(data_dir, fmt + '_' + filename_suff + '.train'), 'wb'))
+        pickle.dump(vd_data,
+                    open(path.join(data_dir, fmt + '_' + filename_suff + '.valid'), 'wb'))
         pickle.dump(ts_data,
                     open(path.join(data_dir, fmt + '_' + filename_suff + '.test'), 'wb'))
     elif fmt == 'vw':
-        write_wv_format(tr_data,
+        write_wv_format(ts_data,
                     open(path.join(data_dir, fmt + '_' + filename_suff + '.train'), 'wb'))
+        write_wv_format(vd_data,
+                    open(path.join(data_dir, fmt + '_' + filename_suff + '.valid'), 'wb'))
         write_wv_format(ts_data,
                     open(path.join(data_dir, fmt + '_' + filename_suff + '.test'), 'wb'))
     else:
@@ -72,12 +79,13 @@ if __name__ == '__main__':
     fmt_gp.add_argument('--vw_fmt', action = 'store_const', dest = 'fmt',
         const = 'vw', help = 'write train/test files in vowpal wobbit format')
     fmt_gp.add_argument('--numpy_array_fmt', action = 'store_const', dest = 'fmt',
-        const = 'numpy_array', help = 'write train/test files as dicts of\
-        numpy arrays')
+        const = 'numpy_array', help = 'write train/test files as dicts of \
+                 numpy arrays')
 
-    parser.add_argument('train_proportion', help='proportion of examples to include \
-                        for training set. the remaining examples are used for \
-                        testing set', type=float)
+    parser.add_argument('train_size', help = 'number of examples to use for \
+                         training', type=int)
+    parser.add_argument('validation_size', help = 'number of examples to use for \
+                         validation set', type=int)
     parser.add_argument('path', help='directory to save train and test files') 
 
     cl_gp = parser.add_mutually_exclusive_group()
@@ -101,6 +109,6 @@ if __name__ == '__main__':
         classes = [int(args.classes[0]), int(args.classes[1])]
         suffix = 'binary_' + args.classes
 
-    data = fetch_mnistdata(args.train_proportion, classes)
+    data = fetch_mnistdata(args.train_size, args.validation_size, classes)
     write(data, args.path, args.fmt, suffix)
 

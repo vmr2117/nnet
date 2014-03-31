@@ -223,7 +223,7 @@ class network:
                / (1.0 * X.shape[0]))
         return err
 
-    def train(self, X, Y, hidden_units = None, theta = None):
+    def train(self, X, Y, X_vd, Y_vd, hidden_units = None, theta = None):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
@@ -236,17 +236,12 @@ class network:
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
         X, Y = self.__massage_data(X, Y)
-        validation_size = np.round(0.1 * X.shape[0])
-        X_vd = X[0:validation_size] 
-        Y_vd = Y[0:validation_size] 
-        X = X[validation_size:]
-        Y = Y[validation_size:]
-
-        n_examples, n_features = X.shape
-        _, n_classes = Y.shape
+        X_vd, Y_vd = self.__massage_data(X,Y)
 
         # initialize network
-        if theta == None:
+        _, n_features = X.shape
+        _, n_classes = Y.shape
+        if not theta:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
 
         cost_err = self.__sgd(X, Y, X_vd, Y_vd, theta)

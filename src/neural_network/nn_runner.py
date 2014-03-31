@@ -9,71 +9,71 @@ import sys
 from neural_network import network
 from pylab import *
 
-def train(data_file, actv, n_hidden_units, model_file, graph_figure_file,
-        init_wts = None): 
-    nnet = network(actv)
-    data = pickle.load(open(data_file))
-    cost_err, theta = nnet.train(data['X'], data['Y'], n_hidden_units, init_wts)
-    pickle.dump(theta, open(model_file, 'wb'))
-    save_fig(cost_err, graph_figure_file)
+def train(args):
+    nnet = network(args.actv)
+    train_data = pickle.load(open(args.train_file))
+    test_data = pickle.load(open(args.test_file))
+    init_wts = None
+    hidden_units = None
+    if args.init_wts_file: init_wts = pickle.load(open(args.init_wts_file))
+    if args.hidden_units: hidden_units = args.hidden_units
+    cost_err, theta = nnet.train(train_data['X'], train_data['Y'],
+                                 test_data['X'], test_data['Y'], 
+                                 args.hidden_units, init_wts)
+    pickle.dump(theta, open(args.model_file, 'wb'))
+    save_fig(cost_err, args.train_graph_file)
 
 def save_fig(cost_err, file_name):
     plot(cost_err.keys(), [cost_err[key][0] for key in cost_err.keys()], 'g.',
             label = 'Training Error')
     plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'r.',
             label = 'Validation Error')
+    legend()
     xlabel('Iteration')
     ylabel('Error')
     title('Training and Validation Error')
-    legend()
     grid(True)
     savefig(file_name)
     show()
 
-def test(data_file, actv, model_file):
-    nnet = network(actv)
-    theta = pickle.load(open(model_file))
-    data = pickle.load(open(data_file))
+def test(args):
+    nnet = network(args.actv)
+    theta = pickle.load(open(args.model_file))
+    data = pickle.load(open(args.test_file))
     print "Accuracy :", nnet.evaluate(data['X'], data['Y'], theta)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('data_file', help='path to the file containing training\
-                        or testing data')
-    parser.add_argument('model_file', help='path to the model file')
-
-    command_gp = parser.add_mutually_exclusive_group()
-    command_gp.set_defaults(cmd = 'train')
-    command_gp.add_argument('--train', action = 'store_const', dest = 'cmd',
-            const = 'train', help = 'train neural network')
-    command_gp.add_argument('--test', action = 'store_const', dest = 'cmd',
-            const = 'test', help = 'predict on test data using given nnet \
-            model')
-
-    actv_gp = parser.add_mutually_exclusive_group()
+    subparsers = parser.add_subparsers(help = 'sub-command help')
+    train_parser = subparsers.add_parser('train', help= 'train neural network')
+    train_parser.add_argument('train_file', help='path to training data')
+    train_parser.add_argument('validation_file', help='path to validation data')
+    train_parser.add_argument('model_file', help='filepath for model')
+    train_parser.add_argument('graph_file', help='filepath for training graph')
+    train_parser.add_argument('hidden_units', nargs='?', help='number of hidden \
+            units', type = int) 
+    train_parser.add_argument('init_wt_file', nargs='?', help='path to the file \
+            containing initial weights.')
+    actv_gp = train_parser.add_mutually_exclusive_group()
     actv_gp.set_defaults(actv = 'logistic')
     actv_gp.add_argument('--logistic_actv', action = 'store_const', dest =
             'actv', const = 'logistic', help = 'logistic activation function')
     actv_gp.add_argument('--tanh_actv', action = 'store_const', dest = 'actv',
             const = 'tanh', help = 'tanh activation function')
-    
-    parser.add_argument('hidden_units', nargs='?', help='number of hidden \
-            units', type = int) 
-    parser.add_argument('init_wt_file', nargs='?', help='path to the file \
-            containing initial weights.')
+    train_parser.set_defaults(func = train)
+
+    test_parser = subparsers.add_parser('test', help = 'test neural network')
+    test_parser.add_argument('test_file', help='path to test data')
+    test_parser.add_argument('model_file', help='filepath for model')
+    actv_gp = test_parser.add_mutually_exclusive_group()
+    actv_gp.set_defaults(actv = 'logistic')
+    actv_gp.add_argument('--logistic_actv', action = 'store_const', dest =
+            'actv', const = 'logistic', help = 'logistic activation function')
+    actv_gp.add_argument('--tanh_actv', action = 'store_const', dest = 'actv',
+            const = 'tanh', help = 'tanh activation function')
+    test_parser.set_defaults(func = test)
 
     args = parser.parse_args()
-
-    if not args.hidden_units and args.cmd == 'train':
-        print "No hidden_units provided"
-        sys.exit(1)
-
-    init_wts = None
-    if args.init_wt_file: init_wts = pickle.load(open(args.init_wt_file))
-    if args.cmd == 'train':
-        train(args.data_file, args.actv, args.hidden_units, args.model_file,
-                'train.png', init_wts)
-    elif args.cmd == 'test':
-        test(args.data_file, args.actv, args.model_file)
+    args.func(args)
 
