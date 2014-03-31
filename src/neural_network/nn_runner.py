@@ -15,18 +15,23 @@ def train(data_file, actv, n_hidden_units, model_file, graph_figure_file,
     data = pickle.load(open(data_file))
     cost_err, theta = nnet.train(data['X'], data['Y'], n_hidden_units, init_wts)
     pickle.dump(theta, open(model_file, 'wb'))
-    save_fig(cost_err, graph_figure)
+    save_fig(cost_err, graph_figure_file)
 
 def save_fig(cost_err, file_name):
-    plot(cost_err.keys(), [cost_err[key][0] for key in cost_err.keys()], 'k--',
+    print cost_err.keys()
+    print [cost_err[key][0] for key in cost_err.keys()]
+    print [cost_err[key][1] for key in cost_err.keys()]
+
+    plot(cost_err.keys(), [cost_err[key][0] for key in cost_err.keys()], 'g^',
             label = 'Training Cost')
-    plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'k:',
+    plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'ro',
             label = 'Validation Error')
     xlabel('Iteration')
     ylabel('Error and Cost')
     title('Training cost and Validation Error')
+    legend()
     grid(True)
-    savefig(filename)
+    savefig(file_name)
     show()
 
 def test(data_file, actv, model_file):
