@@ -244,7 +244,7 @@ class network:
                / (1.0 * X.shape[0]))
         return err
     
-    def __massage_data(X, Y):
+    def __massage_data(self, X, Y):
         '''
         Adds a constant '1' feature to all the samples in X and converts the
         target Y into a matrix of indicator vectors.
@@ -256,7 +256,7 @@ class network:
         new_Y = np.zeros((Y.size, n_classes), dtype=int)
         new_Y[np.array(range(Y.size)), Y] = 1
         X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
-        return X, newY
+        return X, new_Y
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
