@@ -12,13 +12,13 @@ from pylab import *
 def train(args):
     nnet = network(args.actv)
     train_data = pickle.load(open(args.train_file))
-    test_data = pickle.load(open(args.test_file))
+    valid_data = pickle.load(open(args.validation_file))
     init_wts = None
     hidden_units = None
-    if args.init_wts_file: init_wts = pickle.load(open(args.init_wts_file))
+    if args.init_wt_file: init_wts = pickle.load(open(args.init_wt_file))
     if args.hidden_units: hidden_units = args.hidden_units
     cost_err, theta = nnet.train(train_data['X'], train_data['Y'],
-                                 test_data['X'], test_data['Y'], 
+                                 valid_data['X'], valid_data['Y'], 
                                  args.hidden_units, init_wts)
     pickle.dump(theta, open(args.model_file, 'wb'))
     save_fig(cost_err, args.train_graph_file)

@@ -11,7 +11,7 @@ from activation_functions import get_actv_func
 from cost_functions import logistic_cost
 
 class network:
-    def __init__(self, actv_func, log = False):
+    def __init__(self, actv_func, log = True):
         self.actv, self.actv_der = get_actv_func(actv_func)
         self.log = log
 
@@ -25,6 +25,8 @@ class network:
         '''
         n_classes = np.unique(Y).size
         new_Y = np.zeros((Y.size, n_classes), dtype=int)
+        print new_Y.shape
+        print Y.shape
         new_Y[np.array(range(Y.size)), Y] = 1
         X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
         return X, new_Y
@@ -161,7 +163,7 @@ class network:
                vd_err = self.__evaluate(X_vd, Y_vd, theta)
                tr_err = self.__evaluate(X, Y, theta)
                cost_err[epoch] = (tr_err, vd_err)
-               if not log: continue
+               if not self.log: continue
                print 'Iteration:', epoch, 'Validation Error:', vd_err, \
                      'Training Error:', tr_err
         print "Iterations completed: ", epoch + 1
@@ -211,7 +213,7 @@ class network:
                 zip(num_grad, bprop_grad)]
         return max(diff) < 10e-8
 
-    def evaluate(self, X, Y, theta):
+    def evaluate(self, X, Y, n_classes, theta):
         '''
         Evaluates the error of the network with weights theta by testing on
         samples (X, Y) 
@@ -223,8 +225,8 @@ class network:
                / (1.0 * X.shape[0]))
         return err
 
-    def train(self, X, Y, X_vd, Y_vd, hidden_units = None, theta = None):
-        '''
+    def train(self, X, Y, X_vd, Y_vd, n_classes, hidden_units = None, theta =
+            None): '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
         parameter and generates weights theta randomly. Training data is assumed
@@ -235,8 +237,8 @@ class network:
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
-        X, Y = self.__massage_data(X, Y)
-        X_vd, Y_vd = self.__massage_data(X,Y)
+        X, Y = self.__massage_data(X, Y, n_classes)
+        X_vd, Y_vd = self.__massage_data(X_vd, Y_vd, n_classes)
 
         # initialize network
         _, n_features = X.shape
