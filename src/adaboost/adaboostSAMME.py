@@ -68,8 +68,8 @@ def save_fig(train_err, valid_err, n_estimators, file_name):
     ax.set_title('Training and Validation Error')
     leg = ax.legend(loc='upper right', fancybox=True)
     leg.get_frame().set_alpha(0.7)
-    pl.show()
     pl.savefig(file_name)
+    pl.show()
 
 def test(model_file, data_file):
     '''
