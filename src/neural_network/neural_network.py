@@ -237,8 +237,8 @@ class network:
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
-        X, Y = self.__massage_data(X, Y, n_classes)
-        X_vd, Y_vd = self.__massage_data(X_vd, Y_vd, n_classes)
+        X, Y = self.__massage_data(X, Y)
+        X_vd, Y_vd = self.__massage_data(X_vd, Y_vd)
 
         # initialize network
         _, n_features = X.shape
