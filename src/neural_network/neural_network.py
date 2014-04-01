@@ -213,7 +213,7 @@ class network:
                 zip(num_grad, bprop_grad)]
         return max(diff) < 10e-8
 
-    def evaluate(self, X, Y, n_classes, theta):
+    def evaluate(self, X, Y, theta):
         '''
         Evaluates the error of the network with weights theta by testing on
         samples (X, Y) 
@@ -225,8 +225,8 @@ class network:
                / (1.0 * X.shape[0]))
         return err
 
-    def train(self, X, Y, X_vd, Y_vd, n_classes, hidden_units = None, theta =
-            None): '''
+    def train(self, X, Y, X_vd, Y_vd, hidden_units = None, theta = None): 
+        '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
         parameter and generates weights theta randomly. Training data is assumed
