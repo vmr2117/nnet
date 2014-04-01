@@ -5,10 +5,12 @@ for mnist data. Look up commandline options for more information.
 import argparse
 import cPickle as pickle
 import numpy as np
+import pylab as pl
     
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import zero_one_loss
 
 def write(model, model_file):
     '''
@@ -35,14 +37,39 @@ def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty):
                                         num_estimators, algorithm = algo)
     return ab_classifier
 
-def train(ab_classifier, data_file, model_file):
+def train(ab_classifier, train_file, validation_file, model_file, graph_file):
     '''
     Takes a configured adaboost classifier object and train it with the training
     data from the data_file and write the learned model to the model_file.
     '''
-    train_x, train_y = load_data(data_file)
+    train_x, train_y = load_data(train_file)
     ab_classifier = ab_classifier.fit(train_x, train_y)
     write(ab_classifier, model_file) 
+    valid_x, valid_y = load_data(validation_file)
+    # find out stage wise training error
+    n_estimators = len(ab_classifier.estimators_)
+    train_err = np.zeros((n_estimators,))
+    valid_err = np.zeros((n_estimators,))
+    for i, y_pred in enumerate(ab_classifier.staged_predict(train_x)):
+        train_err[i] = zero_one_loss(y_pred, train_y)
+    for i, y_pred in enumerate(ab_classifier.staged_predict(valid_x)):
+        valid_err[i] = zero_one_loss(y_pred, valid_y)
+    save_fig(train_err, valid_err, n_estimators, graph_file)
+
+def save_fig(train_err, valid_err, n_estimators, file_name):
+    fig = pl.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(np.arange(n_estimators) + 1, train_err, label='Train Error', color='red')
+    ax.plot(np.arange(n_estimators) + 1, valid_err, label='Validation Error',
+            color='green')
+    ax.set_ylim((0.0, 0.5))
+    ax.set_xlabel('Number of Learners')
+    ax.set_ylabel('Error')
+    ax.set_title('Training and Validation Error')
+    leg = ax.legend(loc='upper right', fancybox=True)
+    leg.get_frame().set_alpha(0.7)
+    pl.show()
+    pl.savefig(file_name)
 
 def test(model_file, data_file):
     '''
@@ -55,37 +82,32 @@ def test(model_file, data_file):
     correct = np.count_nonzero(test_y == pred_y)
     print 'Accuracy: ', correct * 100 / (1.0 * len(test_y))
 
-def parse_train_args(num_learners, loss, penalty, data_file, model_file):
+def parse_train_args(args):
     '''
     parsers args required for training and calls the appropriate function.
     '''
-    ab_classifier = get_adboost_classifier('SAMME', num_learners, loss, 
-            penalty)
-    train(ab_classifier, data_file, model_file)
+    ab_classifier = get_adboost_classifier('SAMME.R', args.num_learners,
+            args.loss, args.pen)
+    train(ab_classifier, args.train_file, args.validation_file, args.model_file,
+            args.graph_file)
 
-def parse_test_args(model_file, data_file):
+def parse_test_args(args):
     '''
     parsers args required for testing and calls the appropriate function.
     '''
-    test(args.model_file, args.data_file)
+    test(args.model_file, args.test_file)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser() 
-    parser.add_argument('data_file', help='path to the file containing training\
-                        or testing data')
-    parser.add_argument('model_file', help='path to the model file') 
-    parser.add_argument('num_learners', nargs='?', help='number of boosting\
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(help = 'sub-command help')
+    train_parser = subparsers.add_parser('train', help= 'train adaboost')
+    train_parser.add_argument('train_file', help='path to training data')
+    train_parser.add_argument('validation_file', help='path to validation data')
+    train_parser.add_argument('model_file', help='filepath for model')
+    train_parser.add_argument('graph_file', help='filepath for training graph')
+    train_parser.add_argument('num_learners', nargs='?', help='number of boosting\
             rounds', default = 10, type=int)
-
-    command_gp = parser.add_mutually_exclusive_group()
-    command_gp.set_defaults(cmd = 'train')
-    command_gp.add_argument('--train', action = 'store_const', dest = 'cmd',
-            const = 'train', help = 'train adaboost SAMME model')
-    command_gp.add_argument('--test', action = 'store_const', dest = 'cmd',
-            const = 'test', help = 'predict on test data using given adaboost\
-            SAMME model')
-
-    loss_gp = parser.add_mutually_exclusive_group()
+    loss_gp = train_parser.add_mutually_exclusive_group()
     loss_gp.set_defaults(loss = 'log')
     loss_gp.add_argument('--log_loss', action = 'store_const', dest = 'loss',
             const = 'log', help = 'use log loss function for training weak\
@@ -94,15 +116,22 @@ if __name__ == '__main__':
             const = 'hinge', help = 'use hinge loss function for training weak\
             learners')
 
-    penalty_gp = parser.add_mutually_exclusive_group()
+    penalty_gp = train_parser.add_mutually_exclusive_group()
     penalty_gp.set_defaults(pen = 'l2')
     penalty_gp.add_argument('--l1', action = 'store_const', dest = 'pen', const
             = 'l1', help = 'use l1 penalty for training weak learners')
     penalty_gp.add_argument('--l2', action = 'store_const', dest = 'pen', const
             = 'l2', help = 'use l2 penalty for training weak learners')
 
+    train_parser.set_defaults(func = parse_train_args)
+
+    test_parser = subparsers.add_parser('test', help = 'test neural network')
+    test_parser.add_argument('test_file', help='path to test data')
+    test_parser.add_argument('model_file', help='filepath for model')
+    test_parser.set_defaults(func = parse_test_args)
+
     args = parser.parse_args()
-    if args.cmd == 'train': parse_train_args(args.num_learners, args.loss,
-            args.pen, args.data_file, args.model_file)
-    elif args.cmd == 'test': parse_test_args(args.model_file, args.data_file)
+    args.func(args)
+
+
 
