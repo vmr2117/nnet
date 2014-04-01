@@ -32,7 +32,7 @@ class adaboostMM:
             #htx - predicted y
 
             #calculate delta using the predicions, cost matrix and f
-            delta = -np.sum(C[np.array(range(m)), Y])/np.sum(d_sum)
+            delta = -np.sum(C[np.array(range(m)), htx])/np.sum(d_sum)
             #calculate alpha
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             #update f matrix
