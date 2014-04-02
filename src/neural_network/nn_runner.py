@@ -41,7 +41,7 @@ def test(args):
     nnet = network(args.actv)
     theta = pickle.load(open(args.model_file))
     data = pickle.load(open(args.test_file))
-    print "Accuracy :", nnet.evaluate(data['X'], data['Y'], theta)
+    print "Accuracy :", 1.0 - nnet.evaluate(data['X'], data['Y'], theta)
 
 
 if __name__ == '__main__':

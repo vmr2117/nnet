@@ -218,7 +218,7 @@ class network:
 
         Return: err - the error of the network on the given data (X, Y)
         '''
-        if massage_data: X, _ = self.__massage_data(X, Y)
+        X, _ = self.__massage_data(X, Y)
         err = (np.sum(Y != np.argmax(self.__predict(X, theta), axis = 1)) 
                / (1.0 * X.shape[0]))
         return err
