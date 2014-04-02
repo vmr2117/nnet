@@ -154,9 +154,6 @@ class network:
         '''
         cost_err = {}
         for epoch in range(1000000):
-           ind = epoch % X.shape[0]
-           p_derivs = self.__gradient(X[ind], Y[ind], theta)
-           self.__update_weights(p_derivs, 0.01 , theta)
            if epoch % 1000 == 0:
                vd_err = self.__evaluate(X_vd, Y_vd, theta)
                tr_err = self.__evaluate(X, Y, theta)
@@ -164,6 +161,9 @@ class network:
                if not self.log: continue
                print 'Iteration:', epoch, 'Validation Error:', vd_err, \
                      'Training Error:', tr_err
+           ind = epoch % X.shape[0]
+           p_derivs = self.__gradient(X[ind], Y[ind], theta)
+           self.__update_weights(p_derivs, 0.001, theta)
         print "Iterations completed: ", epoch + 1
         return cost_err
 
