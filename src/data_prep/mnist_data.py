@@ -27,9 +27,8 @@ def fetch_mnistdata(trainsize, validsize, classes):
 
     train_valid = trainsize + validsize
     return ({'X':data[:trainsize], 'Y':target[:trainsize]},   
-            {'X':data[trainsize:train_valid],
-                'Y':target[trainsize:train_valid]},
-            {'X':data[train_valid:], 'Y':data[train_valid:]}) 
+            {'X':data[trainsize:train_valid], 'Y':target[trainsize:train_valid]},
+            {'X':data[train_valid:], 'Y':target[train_valid:]}) 
 
 def get_feat_string(data):
     return ' '.join([''.join([str(i),':',str(data[i])]) for i in range(data.size)

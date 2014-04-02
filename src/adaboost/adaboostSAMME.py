@@ -31,10 +31,11 @@ def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty):
     estimators, loss and penalty function given. Configures the object to run on
     all cores.
     '''
-    weak_learner = SGDClassifier(loss=wl_loss, penalty=wl_penalty, verbose=True,
-            n_jobs=-1)
+    weak_learner = SGDClassifier(loss=wl_loss, penalty=wl_penalty,
+            n_jobs=-1, n_iter = 10)
     ab_classifier = AdaBoostClassifier( weak_learner, n_estimators =
                                         num_estimators, algorithm = algo)
+
     return ab_classifier
 
 def train(ab_classifier, train_file, validation_file, model_file, graph_file):
@@ -62,25 +63,25 @@ def save_fig(train_err, valid_err, n_estimators, file_name):
     ax.plot(np.arange(n_estimators) + 1, train_err, label='Train Error', color='red')
     ax.plot(np.arange(n_estimators) + 1, valid_err, label='Validation Error',
             color='green')
-    ax.set_ylim((0.0, 0.5))
+    ax.set_ylim((0.0, 1.0))
     ax.set_xlabel('Number of Learners')
     ax.set_ylabel('Error')
-    ax.set_title('Training and Validation Error')
+    ax.set_title('Adaboost SAMME on MNIST dataset')
     leg = ax.legend(loc='upper right', fancybox=True)
     leg.get_frame().set_alpha(0.7)
     pl.savefig(file_name)
     pl.show()
 
-def test(model_file, data_file):
+def test(model_file, test_file):
     '''
     Tests the model on the test data in data_file using the model in model_file.
     Prints accuracy to report the performance of the classifier. 
     '''
-    test_x, test_y = load_data(data_file)
+    test_x, test_y = load_data(test_file)
     ab_classifier = pickle.load(open(model_file))
     pred_y = ab_classifier.predict(test_x)
     correct = np.count_nonzero(test_y == pred_y)
-    print 'Accuracy: ', correct * 100 / (1.0 * len(test_y))
+    print 'Accuracy: ', correct / (1.0 * len(test_y))
 
 def parse_train_args(args):
     '''
