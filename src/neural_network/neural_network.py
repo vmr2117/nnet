@@ -25,8 +25,6 @@ class network:
         '''
         n_classes = np.unique(Y).size
         new_Y = np.zeros((Y.size, n_classes), dtype=int)
-        print new_Y.shape
-        print Y.shape
         new_Y[np.array(range(Y.size)), Y] = 1
         X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
         return X, new_Y
