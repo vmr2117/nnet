@@ -1,5 +1,5 @@
 '''
-Module to construct a fully connected neural network.
+This module contains a 1 hidden layer neural network for classification. 
 '''
 import argparse
 import copy
@@ -25,8 +25,6 @@ class network:
         '''
         n_classes = np.unique(Y).size
         new_Y = np.zeros((Y.size, n_classes), dtype=int)
-        print new_Y.shape
-        print Y.shape
         new_Y[np.array(range(Y.size)), Y] = 1
         X = np.concatenate((np.ones(X.shape[0])[:, np.newaxis], X), axis=1)
         return X, new_Y
@@ -156,9 +154,6 @@ class network:
         '''
         cost_err = {}
         for epoch in range(1000000):
-           ind = epoch % X.shape[0]
-           p_derivs = self.__gradient(X[ind], Y[ind], theta)
-           self.__update_weights(p_derivs, 0.01 , theta)
            if epoch % 1000 == 0:
                vd_err = self.__evaluate(X_vd, Y_vd, theta)
                tr_err = self.__evaluate(X, Y, theta)
@@ -166,6 +161,9 @@ class network:
                if not self.log: continue
                print 'Iteration:', epoch, 'Validation Error:', vd_err, \
                      'Training Error:', tr_err
+           ind = epoch % X.shape[0]
+           p_derivs = self.__gradient(X[ind], Y[ind], theta)
+           self.__update_weights(p_derivs, 0.001, theta)
         print "Iterations completed: ", epoch + 1
         return cost_err
 
@@ -213,20 +211,20 @@ class network:
                 zip(num_grad, bprop_grad)]
         return max(diff) < 10e-8
 
-    def evaluate(self, X, Y, n_classes, theta):
+    def evaluate(self, X, Y, theta):
         '''
         Evaluates the error of the network with weights theta by testing on
         samples (X, Y) 
 
         Return: err - the error of the network on the given data (X, Y)
         '''
-        if massage_data: X, _ = self.__massage_data(X, Y)
+        X, _ = self.__massage_data(X, Y)
         err = (np.sum(Y != np.argmax(self.__predict(X, theta), axis = 1)) 
                / (1.0 * X.shape[0]))
         return err
 
-    def train(self, X, Y, X_vd, Y_vd, n_classes, hidden_units = None, theta =
-            None): '''
+    def train(self, X, Y, X_vd, Y_vd, hidden_units = None, theta = None): 
+        '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
         parameter and generates weights theta randomly. Training data is assumed
@@ -237,8 +235,8 @@ class network:
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
-        X, Y = self.__massage_data(X, Y, n_classes)
-        X_vd, Y_vd = self.__massage_data(X_vd, Y_vd, n_classes)
+        X, Y = self.__massage_data(X, Y)
+        X_vd, Y_vd = self.__massage_data(X_vd, Y_vd)
 
         # initialize network
         _, n_features = X.shape

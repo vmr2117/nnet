@@ -21,17 +21,18 @@ def train(args):
                                  valid_data['X'], valid_data['Y'], 
                                  args.hidden_units, init_wts)
     pickle.dump(theta, open(args.model_file, 'wb'))
-    save_fig(cost_err, args.train_graph_file)
+    save_fig(cost_err, args.graph_file)
 
 def save_fig(cost_err, file_name):
-    plot(cost_err.keys(), [cost_err[key][0] for key in cost_err.keys()], 'g.',
+    keys = list(sorted(cost_err.iterkeys()))
+    plot(keys, [cost_err[key][0] for key in keys], 'g',
             label = 'Training Error')
-    plot(cost_err.keys(), [cost_err[key][1] for key in cost_err.keys()], 'r.',
+    plot(keys, [cost_err[key][1] for key in keys], 'r',
             label = 'Validation Error')
     legend()
     xlabel('Iteration')
     ylabel('Error')
-    title('Training and Validation Error')
+    title('Neural Network (500 hidden units) - random initalized, LR - 0.01')
     grid(True)
     savefig(file_name)
     show()
@@ -40,7 +41,7 @@ def test(args):
     nnet = network(args.actv)
     theta = pickle.load(open(args.model_file))
     data = pickle.load(open(args.test_file))
-    print "Accuracy :", nnet.evaluate(data['X'], data['Y'], theta)
+    print "Accuracy :", 1.0 - nnet.evaluate(data['X'], data['Y'], theta)
 
 
 if __name__ == '__main__':
