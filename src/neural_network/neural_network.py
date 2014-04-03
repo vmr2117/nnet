@@ -88,35 +88,26 @@ class network:
                 self.actv_der(z))) 
         return list(reversed(errors))
 
-    def __gradient(self, x, y, theta):
+    def __gradient(self, X, Y, theta):
         '''
-        Estimates the partial derivatives at given a given sample (x, y) using
+        Estimates the average partial gradients at all samples in (X, Y) using
         back propagation algorithm.
 
-        Return: partial derivatives of cost function w.r.t theta evaluated on
-                the sample (x, y)
+        Return: p_derivs - partial gradients of the cost function
         '''
-        Z, activations = self.__feed_forward(x, theta)
-        deltas = self.__back_propagate(Z, activations[-1] - y, theta)
-        p_derivs = [np.outer(deltas[layer], activations[layer]) 
+        Z, activations = self.__feed_forward(X, theta)
+        deltas = self.__back_propagate(Z, activations[-1] - Y, theta)
+        p_derivs = None
+        if len(X.shape) == 2:
+            n_samples, _= X.shape
+            p_derivs = [(np.einsum('ij,ik->jk',deltas[layer], activations[layer]) 
+                         / n_samples)
+                        for layer in range(0, len(activations) - 1)]
+        else:
+            p_derivs = [np.outer(deltas[layer], activations[layer]) 
                                     for layer in range(0, len(activations) - 1)] 
         return p_derivs
  
-    def __full_gradient(self, theta, X, Y):
-        '''
-        Computes the averaged gradient of the cost function at all the samples
-        in (X, Y) using back propagation.
-
-        Return: grad - averaged gradient evaluated on all samples in (X, Y) 
-        '''
-        n_examples, _ = X.shape
-        grad = [np.zeros_like(weights) for weights in theta]
-        for row in range(X.shape[0]):
-            derv_c = self.__gradient(X[row], Y[row], theta)
-            for i in range(len(grad)): grad[i] += derv_c[i]
-        for i in range(len(grad)): grad[i] /= n_examples
-        return grad
-   
     def __numerical_gradient(self, theta, X, Y):
         '''
         Computes numerical gradient of the logistic cost function with respect
@@ -205,7 +196,7 @@ class network:
         _, n_features = X.shape
         _, n_classes = Y.shape
         theta = self.__random_weights(n_features, n_classes, hidden_units)
-        bprop_grad = self.__full_gradient(theta, X, Y)
+        bprop_grad = self.__gradient(theta, X, Y)
         num_grad = self.__numerical_gradient(theta, X, Y) 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(num_grad, bprop_grad)]
