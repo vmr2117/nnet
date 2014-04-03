@@ -3,19 +3,20 @@ adaboost.MM implementation.
 '''
 
 import numpy as np
+from vowpal_porpoise import VW
 
 class adaboostMM:
     def __init__(self, rounds = 5):
         self.T = rounds
         self.wlearner = []
-        self.alpha = np.zeroes(self.T)
+        self.alpha = np.zeros(self.T)
 
     def fit(self, X,Y):
         k = np.unique(Y)
         m, _ = X.shape
         '''In our case, the k is 10 for MNIST data set'''
-        f = np.zeroes(m, k)
-        C = np.zeroes(m, k)
+        f = np.zeros((m, k))
+        C = np.zeros((m, k))
         for t in range(T):
             '''choose cost matrix C'''
             # set values where l != yi

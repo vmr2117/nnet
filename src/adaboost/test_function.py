@@ -21,5 +21,4 @@ cost_matrix[1,2]=99
 cost_matrix[3,1]=5
 cost_matrix[4,3]=88
 s=convert_cost_vw(cost_matrix)
-
 print cost_matrix
