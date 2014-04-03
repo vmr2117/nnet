@@ -28,9 +28,11 @@ class adaboostMM:
             #vw_cost is the cost matrix in vowpal wabbit conpatibel version
             convert_cost_vw(C)
             #call vowpal wabbit for training a weak classifier.
-            self.wlearner[t] = vw()
+            #self.wlearner[t] = VW("--coass 10 vw_cost -f csoaa.mm.model")
+            a = VW("--coass 10 vw_cost -f csoaa.mm.model")
             #predicion on train set
-            htx = vw(X,Y,self.wlearner[t])
+            #htx = vw(X,Y,self.wlearner[t])
+            htx=a.learn("-t -i csoaa.mm.model vw_cost")
             #theta = weaklearner parameters
             #htx - predicted y
 
