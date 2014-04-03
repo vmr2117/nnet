@@ -1,5 +1,5 @@
 '''
-Module to construct a fully connected neural network.
+This module contains a 1 hidden layer neural network for classification. 
 '''
 import argparse
 import copy
