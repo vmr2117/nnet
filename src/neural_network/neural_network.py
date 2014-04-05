@@ -9,6 +9,7 @@ import time
 
 from activation_functions import get_actv_func
 from cost_functions import logistic_cost
+from sklearn.utils import shuffle
 
 class network:
     def __init__(self, actv_func, log = True):
@@ -136,28 +137,42 @@ class network:
         for layer in range(len(theta)): 
             theta[layer] -=  learning_rate * p_derivs[layer]
 
-    def __sgd(self, X, Y, X_vd, Y_vd, theta):
+    def __sgd(self, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size = 32,
+              max_epochs = 500, validation_freq = 50000, random = True): 
         '''
-        Performs stochastic gradient descent on the dataset X,Y for the given
-        number of epochs using the given learning rate.
+        Performs mini-batch stochastic gradient descent(SGD) on the dataset X,Y
+        for a 'max_epochs' epochs.
 
         Return: cost_err - list of training cost and validation error
         '''
+        n_samples, _ = tr_X.shape 
+        batch_idx = [(i * batch_size, (i + 1) * batch_size - 1) 
+                        for i in range(n_samples / batch_size)] 
+        if batch_idx[-1][1] < n_samples - 1:
+            batch_idx.append((batch_idx[-1][1]+1, n_samples - 1))
+        
         cost_err = {}
-        for epoch in range(1000000):
-           if epoch % 1000 == 0:
-               vd_err = self.__evaluate(X_vd, Y_vd, theta)
-               tr_err = self.__evaluate(X, Y, theta)
+        epoch = 1
+        while epoch < max_epochs:
+            # validation
+            if (epoch * n_samples) % validation_freq == 0: 
+               vd_err = self.__evaluate(vd_X, vd_Y, theta)
+               tr_err = self.__evaluate(tr_X, tr_Y, theta)
                cost_err[epoch] = (tr_err, vd_err)
-               if not self.log: continue
-               print 'Iteration:', epoch, 'Validation Error:', vd_err, \
-                     'Training Error:', tr_err
-           ind = epoch % X.shape[0]
-           p_derivs = self.__gradient(X[ind], Y[ind], theta)
-           self.__update_weights(p_derivs, 0.001, theta)
-        print "Iterations completed: ", epoch + 1
-        return cost_err
+               print 'Updates:', epoch * n_samples, 'Validation Error:', \
+                     vd_err, 'Training Error:', tr_err
 
+            # training on a epoch
+            tr_X, tr_Y = shuffle(tr_X, tr_Y)
+            for batch in batch_idx:
+                X = tr_X[batch[0]:batch[1]]
+                Y = tr_Y[batch[0]:batch[1]]
+                p_derivs = self.__gradient(X, Y, theta)
+                self.__update_weights(p_derivs, 0.001, theta)
+            epoch += 1
+
+        print "Total Updates: ", epoch * n_samples
+        return cost_err
         
     def __predict(self, X, theta):
         '''
@@ -226,10 +241,9 @@ class network:
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
+
         X, Y = self.__massage_data(X, Y)
         X_vd, Y_vd = self.__massage_data(X_vd, Y_vd)
-
-        # initialize network
         _, n_features = X.shape
         _, n_classes = Y.shape
         if not theta:
@@ -249,7 +263,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     nnet = network('logistic')
     data = pickle.load(open(args.data_file)) 
-    np.random.seed(19) #seed
     assert nnet.check_gradient(data['X'], data['Y'], args.hidden_units), \
                                                     'Incorrect gradient!'
     print 'Gradient check passed'
