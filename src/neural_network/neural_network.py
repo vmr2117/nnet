@@ -138,10 +138,12 @@ class network:
             theta[layer] -=  learning_rate * p_derivs[layer]
 
     def __sgd(self, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size = 32,
-              max_epochs = 500, validation_freq = 50000, random = True): 
+              max_epochs = 500, vd_freq = 1563): 
         '''
         Performs mini-batch stochastic gradient descent(SGD) on the dataset X,Y
-        for a 'max_epochs' epochs.
+        for a 'max_epochs' epochs. Uses a default batch size of 32 and runs for
+        a maximum of 500 epochs through the data_set. Randomly Shuffles the
+        dataset every epoch.
 
         Return: cost_err - list of training cost and validation error
         '''
@@ -153,22 +155,49 @@ class network:
         
         cost_err = {}
         epoch = 1
-        while epoch < max_epochs:
-            # validation
-            if (epoch * n_samples) % validation_freq == 0: 
-               vd_err = self.__evaluate(vd_X, vd_Y, theta)
-               tr_err = self.__evaluate(tr_X, tr_Y, theta)
-               cost_err[epoch] = (tr_err, vd_err)
-               print 'Updates:', epoch * n_samples, 'Validation Error:', \
-                     vd_err, 'Training Error:', tr_err
-
-            # training on a epoch
+        best_vd_err = np.inf
+        patience = 5000
+        patience_inc_factor = 2
+        improvement_thresh =  0.995
+        best_theta = None
+        train_epoch = True
+        while epoch < max_epochs and train_epoch:
             tr_X, tr_Y = shuffle(tr_X, tr_Y)
-            for batch in batch_idx:
+            for num, batch in enumerate(batch_idx):
                 X = tr_X[batch[0]:batch[1]]
                 Y = tr_Y[batch[0]:batch[1]]
                 p_derivs = self.__gradient(X, Y, theta)
                 self.__update_weights(p_derivs, 0.001, theta)
+
+                vd_err = self.__evaluate(vd_X, vd_Y, theta)
+                tr_err = self.__evaluate(tr_X, tr_Y, theta)
+                cost_err[epoch] = (tr_err, vd_err)
+                print 'Update:', 'Validation Error:', \
+                    vd_err, 'Training Error:', tr_err
+                '''
+                batch_iters = epoch * len(batch_idx) + num
+                if batch_iters % vd_freq == 0:
+                    # compute validation error
+                    vd_err = self.__evaluate(vd_X, vd_Y, theta)
+                    tr_err = self.__evaluate(tr_X, tr_Y, theta)
+                    cost_err[epoch] = (tr_err, vd_err)
+                    print 'Update:', batch_iters, 'Validation Error:', \
+                        vd_err, 'Training Error:', tr_err
+
+                    # early stopping check
+                    if vd_err < best_vd_err :
+                        best_vd_err = vd_err
+                        best_theta = copy.deepcopy(theta)
+                        # increase patience.
+                        if vd_err < best_vd_err * improvement_thresh:
+                            patience = max(patience, (batch_iters
+                                                      * patience_inc_factor))
+                if patience <= batch_iters:
+                    cont = False
+                    break
+                '''
+
+
             epoch += 1
 
         print "Total Updates: ", epoch * n_samples
