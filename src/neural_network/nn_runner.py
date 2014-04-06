@@ -8,6 +8,7 @@ import sys
 
 from neural_network import network
 from pylab import *
+from signal import signal
 
 def train(args):
     nnet = network(args.actv)
@@ -41,8 +42,10 @@ def test(args):
     nnet = network(args.actv)
     theta = pickle.load(open(args.model_file))
     data = pickle.load(open(args.test_file))
-    print "Accuracy :", 1.0 - nnet.evaluate(data['X'], data['Y'], theta)
+    print "Accuracy :", 1.0 - nnet.test(data['X'], data['Y'], theta)
 
+def early_stopping(signal, frame):
+    sys.exit(0)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

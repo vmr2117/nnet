@@ -10,6 +10,7 @@ import time
 from activation_functions import get_actv_func
 from cost_functions import logistic_cost
 from sklearn.utils import shuffle
+from multiprocessing import Queue
 
 class network:
     def __init__(self, actv_func, log = True):
@@ -138,7 +139,7 @@ class network:
             theta[layer] -=  learning_rate * p_derivs[layer]
 
     def __sgd(self, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size = 32,
-              max_epochs = 500, vd_freq = 1563): 
+            max_epochs = 500, vd_freq = 1563): 
         '''
         Performs mini-batch stochastic gradient descent(SGD) on the dataset X,Y
         for a 'max_epochs' epochs. Uses a default batch size of 32 and runs for
@@ -147,6 +148,7 @@ class network:
 
         Return: cost_err - list of training cost and validation error
         '''
+        # generate batch idx for training
         n_samples, _ = tr_X.shape 
         batch_idx = [(i * batch_size, (i + 1) * batch_size - 1) 
                         for i in range(n_samples / batch_size)] 
@@ -154,53 +156,32 @@ class network:
             batch_idx.append((batch_idx[-1][1]+1, n_samples - 1))
         
         cost_err = {}
-        epoch = 1
         best_vd_err = np.inf
-        patience = 5000
-        patience_inc_factor = 2
-        improvement_thresh =  0.995
         best_theta = None
-        train_epoch = True
-        while epoch < max_epochs and train_epoch:
+        best_epochs = None
+        epoch = 0
+        while epoch < max_epochs:
             tr_X, tr_Y = shuffle(tr_X, tr_Y)
             for num, batch in enumerate(batch_idx):
-                X = tr_X[batch[0]:batch[1]]
-                Y = tr_Y[batch[0]:batch[1]]
-                p_derivs = self.__gradient(X, Y, theta)
-                self.__update_weights(p_derivs, 0.001, theta)
-
-                vd_err = self.__evaluate(vd_X, vd_Y, theta)
-                tr_err = self.__evaluate(tr_X, tr_Y, theta)
-                cost_err[epoch] = (tr_err, vd_err)
-                print 'Update:', 'Validation Error:', \
-                    vd_err, 'Training Error:', tr_err
-                '''
+                # compute validation error
                 batch_iters = epoch * len(batch_idx) + num
                 if batch_iters % vd_freq == 0:
-                    # compute validation error
                     vd_err = self.__evaluate(vd_X, vd_Y, theta)
                     tr_err = self.__evaluate(tr_X, tr_Y, theta)
-                    cost_err[epoch] = (tr_err, vd_err)
-                    print 'Update:', batch_iters, 'Validation Error:', \
-                        vd_err, 'Training Error:', tr_err
-
-                    # early stopping check
+                    cost_err[batch_iters] = (tr_err, vd_err)
                     if vd_err < best_vd_err :
                         best_vd_err = vd_err
                         best_theta = copy.deepcopy(theta)
-                        # increase patience.
-                        if vd_err < best_vd_err * improvement_thresh:
-                            patience = max(patience, (batch_iters
-                                                      * patience_inc_factor))
-                if patience <= batch_iters:
-                    cont = False
-                    break
-                '''
-
-
+                        best_epochs = epoch + 1
+                    print 'Update:', batch_iters, 'Validation Error:', \
+                        vd_err, 'Training Error:', tr_err
+                # update weights
+                X = tr_X[batch[0]:batch[1]]
+                Y = tr_Y[batch[0]:batch[1]]
+                p_derivs = self.__gradient(X, Y, theta)
+                self.__update_weights(p_derivs, 0.02, theta)
             epoch += 1
-
-        print "Total Updates: ", epoch * n_samples
+        print "Total Epochs: ", epoch
         return cost_err
         
     def __predict(self, X, theta):
@@ -216,6 +197,7 @@ class network:
         _, actv = self.__feed_forward(X, theta)
         return actv[-1]
 
+    @staticmethod
     def __evaluate(self, X, Y, theta):
         '''
         Evaluates the error of the network with weights theta by testing on
@@ -246,7 +228,7 @@ class network:
                 zip(num_grad, bprop_grad)]
         return max(diff) < 10e-8
 
-    def evaluate(self, X, Y, theta):
+    def test(self, X, Y, theta):
         '''
         Evaluates the error of the network with weights theta by testing on
         samples (X, Y) 
