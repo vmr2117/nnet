@@ -6,51 +6,28 @@ import cPickle as pickle
 import numpy as np
 import sys
 
+from db_writer import db_writer
 from neural_network import network
 from pylab import *
 from signal import signal
-from multiprocessing import Process, Queue
-import sqlite3
 import time
 
-class db_writer:
-    def __init__(self, file_name):
-        self.conn = sqlite3.connect(file_name)
-        self.c = self.conn.cursor()
-        # create table
-        create_str = ('CREATE TABLE ' + file_name
-                        + ' (iter, tr_err real, vd_err real)')
-        self.c.execute(create_str)
-        self.conn.commit()
-        self.w_str_open = ('INSERT INTO ' + file_name
-                        + ' values (' )
-        self.w_str_close = ')'
-    
-    def write(self, it, vd_err, tr_err):
-        write_str = (self.w_str_open + ','.join([str(it), str(tr_err), str(vd_err)]) 
-                     + self.w_str_close)
-        self.c.execute(write_str)
-        self.conn.commit()
 
 def train(args):
     s = time.time()
-    train_data = pickle.load(open(args.train_file))
-    valid_data = pickle.load(open(args.validation_file))
+    tr_data = pickle.load(open(args.train_file))
+    vd_data = pickle.load(open(args.validation_file))
     init_wts = None
     hidden_units = None
     if args.init_wt_file: init_wts = pickle.load(open(args.init_wt_file))
     if args.hidden_units: hidden_units = args.hidden_units
-
-    vd_queue = Queue()
-    bt_queue = Queue()
-    nnet = network(args.actv, vd_queue, bt_queue, args.model_file)
-    train_proc = Process(target = nnet.train, args = (train_data['X'],
-                            train_data['Y'], args.hidden_units, init_wts))
-    train_proc.start()
-    nnet.validate_model(train_data['X'], train_data['Y'],valid_data['X'],
-                             valid_data['Y'], db_writer(args.model_perf_db))
-    train_proc.join()
-    print time.time() - s
+    
+    nnet = network(args.actv)
+    theta = nnet.train(db_writer(args.model_perf_db), tr_data['X'],
+            tr_data['Y'], vd_data['X'], vd_data['Y'], args.hidden_units,
+            init_wts)
+    print 'Training time:', time.time() - s, 'seconds'
+    pickle.dump(theta, open(args.model_file, 'wb'))
 
 def save_fig(cost_err, file_name):
     keys = list(sorted(cost_err.iterkeys()))
