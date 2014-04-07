@@ -45,8 +45,8 @@ adaboost_train_200wl:
 											       data/numpy_array_multiclass.valid \
 											       models/adaboost_200wl_30passes.model \
 												   results/adaboost_200wl_30passes_train.png \
-												   200 \
-											       30
+												   30 \
+											       200
 
 adaboost_train_50wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
@@ -54,8 +54,8 @@ adaboost_train_50wl:
 											       data/numpy_array_multiclass.valid \
 											       models/adaboost_50wl_30passes.model \
 												   results/adaboost_50wl_30passes_train.png \
-												   50 \
-												   30
+												   30 \
+												   50
 
 adaboost_test_50wl:
 	@python src/adaboostSAMME.py train             data/numpy_array_multiclass.test \

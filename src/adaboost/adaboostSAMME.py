@@ -70,7 +70,6 @@ def save_fig(train_err, valid_err, n_estimators, file_name):
     leg = ax.legend(loc='upper right', fancybox=True)
     leg.get_frame().set_alpha(0.7)
     pl.savefig(file_name)
-    pl.show()
 
 def test(model_file, test_file):
     '''
