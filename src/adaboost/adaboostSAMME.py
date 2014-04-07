@@ -25,7 +25,7 @@ def load_data(data_file):
     data = pickle.load(open(data_file)) 
     return (data['X'], data['Y'])
 
-def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty):
+def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty, passes):
     '''
     Constructs a adaboost classifier object based on the algorithm, number of
     estimators, loss and penalty function given. Configures the object to run on
@@ -88,7 +88,7 @@ def parse_train_args(args):
     parsers args required for training and calls the appropriate function.
     '''
     ab_classifier = get_adboost_classifier('SAMME.R', args.num_learners,
-            args.loss, args.pen)
+            args.loss, args.pen, args.epochs)
     train(ab_classifier, args.train_file, args.validation_file, args.model_file,
             args.graph_file)
 
@@ -106,8 +106,10 @@ if __name__ == '__main__':
     train_parser.add_argument('validation_file', help='path to validation data')
     train_parser.add_argument('model_file', help='filepath for model')
     train_parser.add_argument('graph_file', help='filepath for training graph')
-    train_parser.add_argument('num_learners', nargs='?', help='number of boosting\
-            rounds', default = 10, type=int)
+    train_parser.add_argument('epochs', help='number of epochs for weak \
+            learners', type = int)
+    train_parser.add_argument('num_learners', nargs='?', help='number of weak \
+            learners', default = 10, type=int)
     loss_gp = train_parser.add_mutually_exclusive_group()
     loss_gp.set_defaults(loss = 'log')
     loss_gp.add_argument('--log_loss', action = 'store_const', dest = 'loss',
