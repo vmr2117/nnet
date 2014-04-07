@@ -6,7 +6,7 @@ import cPickle as pickle
 import numpy as np
 import sys
 
-from db_writer import db_writer
+from db_interface import db_interface
 from neural_network import network
 from pylab import *
 from signal import signal
@@ -23,25 +23,14 @@ def train(args):
     if args.hidden_units: hidden_units = args.hidden_units
     
     nnet = network(args.actv)
-    theta = nnet.train(db_writer(args.model_perf_db), tr_data['X'],
+    db = db_interface(args.model_perf_db)
+    db.create_table()
+    theta = nnet.train(db, tr_data['X'],
             tr_data['Y'], vd_data['X'], vd_data['Y'], args.hidden_units,
             init_wts)
     print 'Training time:', time.time() - s, 'seconds'
     pickle.dump(theta, open(args.model_file, 'wb'))
 
-def save_fig(cost_err, file_name):
-    keys = list(sorted(cost_err.iterkeys()))
-    plot(keys, [cost_err[key][0] for key in keys], 'g',
-            label = 'Training Error')
-    plot(keys, [cost_err[key][1] for key in keys], 'r',
-            label = 'Validation Error')
-    legend()
-    xlabel('Iteration')
-    ylabel('Error')
-    title('Neural Network (500 hidden units) - random initalized, LR - 0.01')
-    grid(True)
-    savefig(file_name)
-    show()
 
 def test(args):
     nnet = network(args.actv, None, None, None)
