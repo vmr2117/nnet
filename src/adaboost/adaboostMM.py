@@ -47,16 +47,43 @@ class adaboostMM:
 
 
     '''Write cost matrix to file vw_cost as the format vw wanted'''
-    def convert_cost_vw(cost_matrix):
+    def convert_cost_vw(self, cost_matrix):
         f=open('vw_cost','w')
-        _,col=cost_matrix.shape
-        for i in range(len(cost_matrix)):
+        n_samples,n_features=cost_matrix.shape
+        for i in range(n_samples):
             #m_temp=[]
-            for j in range(col):
+            for j in range(n_features):
                 if cost_matrix[i][j]!=0:
                 #m_temp.append(`j+1`+':'+`cost_matrix[i][j]`)
                     f.write(`j+1`+':'+`cost_matrix[i][j]`+' ')
             f.write('\n')
         f.close()
 
+    def transform(self, X):
+        n_samples, n_features = np.shape(X)
+        result = []
+        for i in range(n_samples):
+            result.append({
+                          str(j): X[i, j]
+                          for j in range(n_features)
+                          if X[i, j] != 0
+                          })
+        return result
 
+    def train(self, instance_stream):
+	model=VW(moniker='test',passes=10,loss='quadratic',csoaa=10)
+
+	for instance in instance_stream:
+		model.push_instance(instance)
+		seen+=1
+		if seen % 1000 ==0:
+			print 'setreamed %d instances already' % seen
+	print 'streaming finished'
+	return self
+
+
+
+
+
+
+print a
