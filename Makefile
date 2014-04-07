@@ -47,6 +47,7 @@ adaboost_train_200wl:
 												   results/adaboost_200wl_30passes_train.png \
 												   30 \
 											       200
+	# 35 minutes
 
 adaboost_train_50wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
