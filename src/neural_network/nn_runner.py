@@ -9,20 +9,48 @@ import sys
 from neural_network import network
 from pylab import *
 from signal import signal
+from multiprocessing import Process, Queue
+import sqlite3
+import time
+
+class db_writer:
+    def __init__(self, file_name):
+        self.conn = sqlite3.connect(file_name)
+        self.c = self.conn.cursor()
+        # create table
+        create_str = ('CREATE TABLE ' + file_name
+                        + ' (iter, tr_err real, vd_err real)')
+        self.c.execute(create_str)
+        self.conn.commit()
+        self.w_str_open = ('INSERT INTO ' + file_name
+                        + ' values (' )
+        self.w_str_close = ')'
+    
+    def write(self, it, vd_err, tr_err):
+        write_str = (self.w_str_open + ','.join([str(it), str(tr_err), str(vd_err)]) 
+                     + self.w_str_close)
+        self.c.execute(write_str)
+        self.conn.commit()
 
 def train(args):
-    nnet = network(args.actv)
+    s = time.time()
     train_data = pickle.load(open(args.train_file))
     valid_data = pickle.load(open(args.validation_file))
     init_wts = None
     hidden_units = None
     if args.init_wt_file: init_wts = pickle.load(open(args.init_wt_file))
     if args.hidden_units: hidden_units = args.hidden_units
-    cost_err, theta = nnet.train(train_data['X'], train_data['Y'],
-                                 valid_data['X'], valid_data['Y'], 
-                                 args.hidden_units, init_wts)
-    pickle.dump(theta, open(args.model_file, 'wb'))
-    save_fig(cost_err, args.graph_file)
+
+    vd_queue = Queue()
+    bt_queue = Queue()
+    nnet = network(args.actv, vd_queue, bt_queue, args.model_file)
+    train_proc = Process(target = nnet.train, args = (train_data['X'],
+                            train_data['Y'], args.hidden_units, init_wts))
+    train_proc.start()
+    nnet.validate_model(train_data['X'], train_data['Y'],valid_data['X'],
+                             valid_data['Y'], db_writer(args.model_perf_db))
+    train_proc.join()
+    print time.time() - s
 
 def save_fig(cost_err, file_name):
     keys = list(sorted(cost_err.iterkeys()))
@@ -39,13 +67,10 @@ def save_fig(cost_err, file_name):
     show()
 
 def test(args):
-    nnet = network(args.actv)
+    nnet = network(args.actv, None, None, None)
     theta = pickle.load(open(args.model_file))
     data = pickle.load(open(args.test_file))
     print "Accuracy :", 1.0 - nnet.test(data['X'], data['Y'], theta)
-
-def early_stopping(signal, frame):
-    sys.exit(0)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -54,7 +79,8 @@ if __name__ == '__main__':
     train_parser.add_argument('train_file', help='path to training data')
     train_parser.add_argument('validation_file', help='path to validation data')
     train_parser.add_argument('model_file', help='filepath for model')
-    train_parser.add_argument('graph_file', help='filepath for training graph')
+    train_parser.add_argument('model_perf_db', help='filepath for a file db \
+            where training and validation errors are stored')
     train_parser.add_argument('hidden_units', nargs='?', help='number of hidden \
             units', type = int) 
     train_parser.add_argument('init_wt_file', nargs='?', help='path to the file \

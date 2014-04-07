@@ -13,9 +13,11 @@ from sklearn.utils import shuffle
 from multiprocessing import Queue
 
 class network:
-    def __init__(self, actv_func, log = True):
+    def __init__(self, actv_func, vd_queue, bt_queue, model_file):
         self.actv, self.actv_der = get_actv_func(actv_func)
-        self.log = log
+        self.vd_queue = vd_queue
+        self.bt_queue = bt_queue
+        self.model_file = model_file
 
     def __massage_data(self, X, Y):
         '''
@@ -138,8 +140,8 @@ class network:
         for layer in range(len(theta)): 
             theta[layer] -=  learning_rate * p_derivs[layer]
 
-    def __sgd(self, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size = 32,
-            max_epochs = 500, vd_freq = 1563): 
+    def __sgd(self, tr_X, tr_Y, theta, batch_size = 32, max_epochs = 20,
+              vd_freq = 1563): 
         '''
         Performs mini-batch stochastic gradient descent(SGD) on the dataset X,Y
         for a 'max_epochs' epochs. Uses a default batch size of 32 and runs for
@@ -155,34 +157,26 @@ class network:
         if batch_idx[-1][1] < n_samples - 1:
             batch_idx.append((batch_idx[-1][1]+1, n_samples - 1))
         
-        cost_err = {}
         best_vd_err = np.inf
         best_theta = None
-        best_epochs = None
         epoch = 0
         while epoch < max_epochs:
             tr_X, tr_Y = shuffle(tr_X, tr_Y)
             for num, batch in enumerate(batch_idx):
-                # compute validation error
+                # enqueue for validation based on frequency requested
                 batch_iters = epoch * len(batch_idx) + num
                 if batch_iters % vd_freq == 0:
-                    vd_err = self.__evaluate(vd_X, vd_Y, theta)
-                    tr_err = self.__evaluate(tr_X, tr_Y, theta)
-                    cost_err[batch_iters] = (tr_err, vd_err)
-                    if vd_err < best_vd_err :
-                        best_vd_err = vd_err
-                        best_theta = copy.deepcopy(theta)
-                        best_epochs = epoch + 1
-                    print 'Update:', batch_iters, 'Validation Error:', \
-                        vd_err, 'Training Error:', tr_err
+                    while not self.bt_queue.empty():
+                        best_theta = self.bt_queue.get()
+                    self.vd_queue.put((True, batch_iters, theta, best_vd_err))
                 # update weights
                 X = tr_X[batch[0]:batch[1]]
                 Y = tr_Y[batch[0]:batch[1]]
                 p_derivs = self.__gradient(X, Y, theta)
                 self.__update_weights(p_derivs, 0.02, theta)
             epoch += 1
-        print "Total Epochs: ", epoch
-        return cost_err
+        self.vd_queue.put((False, None, None, None))
+        return best_theta
         
     def __predict(self, X, theta):
         '''
@@ -197,7 +191,6 @@ class network:
         _, actv = self.__feed_forward(X, theta)
         return actv[-1]
 
-    @staticmethod
     def __evaluate(self, X, Y, theta):
         '''
         Evaluates the error of the network with weights theta by testing on
@@ -240,7 +233,18 @@ class network:
                / (1.0 * X.shape[0]))
         return err
 
-    def train(self, X, Y, X_vd, Y_vd, hidden_units = None, theta = None): 
+    def validate_model(self, tr_X, tr_Y, vd_X, vd_Y, db_writer):
+        tr_X, tr_Y = self.__massage_data(tr_X, tr_Y)
+        vd_X, vd_Y = self.__massage_data(vd_X, vd_Y)
+        while True:
+            (cont, it, theta, best_vd_err)= self.vd_queue.get()
+            if not cont: break
+            tr_err = self.__evaluate(tr_X, tr_Y, theta)
+            vd_err = self.__evaluate(vd_X, vd_Y, theta)
+            db_writer.write(it, vd_err, tr_err)
+            if vd_err < best_vd_err: self.bt_queue.put(theta)
+            
+    def train(self, X, Y, hidden_units = None, theta = None): 
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
@@ -254,14 +258,13 @@ class network:
         assert ok, 'hidden units / weights missing'
 
         X, Y = self.__massage_data(X, Y)
-        X_vd, Y_vd = self.__massage_data(X_vd, Y_vd)
         _, n_features = X.shape
         _, n_classes = Y.shape
         if not theta:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
 
-        cost_err = self.__sgd(X, Y, X_vd, Y_vd, theta)
-        return cost_err, theta
+        best_theta = self.__sgd(X, Y, theta)
+        pickle.dump(best_theta, open(self.model_file, 'wb'))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
