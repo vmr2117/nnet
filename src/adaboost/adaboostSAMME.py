@@ -6,6 +6,7 @@ import argparse
 import cPickle as pickle
 import numpy as np
 import pylab as pl
+import time
     
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import SGDClassifier
@@ -43,6 +44,7 @@ def train(ab_classifier, train_file, validation_file, model_file, graph_file):
     Takes a configured adaboost classifier object and train it with the training
     data from the data_file and write the learned model to the model_file.
     '''
+    s = time.time()
     train_x, train_y = load_data(train_file)
     ab_classifier = ab_classifier.fit(train_x, train_y)
     write(ab_classifier, model_file) 
@@ -56,6 +58,7 @@ def train(ab_classifier, train_file, validation_file, model_file, graph_file):
     for i, y_pred in enumerate(ab_classifier.staged_predict(valid_x)):
         valid_err[i] = zero_one_loss(y_pred, valid_y)
     save_fig(train_err, valid_err, n_estimators, graph_file)
+    print 'Training time:', time.time() - s, 'seconds'
 
 def save_fig(train_err, valid_err, n_estimators, file_name):
     fig = pl.figure()
