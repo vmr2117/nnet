@@ -40,21 +40,21 @@ neuralnet_adaboost_init_train_graph:
 												   results/neuralnet_adaboost_init_train.png 
 
 adaboost_train_200wl:
-	@python src/adaboostSAMME.py train 			   --log_loss --l2 train_file \
+	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
 											       data/numpy_array_multiclass.train \
 											       data/numpy_array_multiclass.valid \
 											       models/adaboost_200wl_30passes.model \
 												   results/adaboost_200wl_30passes_train.png \
-												   200
+												   200 \
 											       30
 
 adaboost_train_50wl:
-	@python src/adaboostSAMME.py train 			   --log_loss --l2 train_file \
+	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
 											       data/numpy_array_multiclass.train \
 											       data/numpy_array_multiclass.valid \
 											       models/adaboost_50wl_30passes.model \
 												   results/adaboost_50wl_30passes_train.png \
-												   50
+												   50 \
 												   30
 
 adaboost_test_50wl:
