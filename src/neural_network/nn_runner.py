@@ -27,7 +27,7 @@ def train(args):
     db.create_table()
     theta = nnet.train(db, tr_data['X'],
             tr_data['Y'], vd_data['X'], vd_data['Y'], args.hidden_units,
-            init_wts)
+            init_wts, args.mini_batch_size, args.epochs, args.validation_freq)
     print 'Training time:', time.time() - s, 'seconds'
     pickle.dump(theta, open(args.model_file, 'wb'))
 
@@ -47,6 +47,9 @@ if __name__ == '__main__':
     train_parser.add_argument('model_file', help='filepath for model')
     train_parser.add_argument('model_perf_db', help='filepath for a file db \
             where training and validation errors are stored')
+    train_parser.add_argument('epochs', help='number of epochs to train', type=int)
+    train_parser.add_argument('validation_freq', help='frequency of validation', type=int)
+    train_parser.add_argument('mini_batch_size', help='mini_batch size for SGD', type=int)
     train_parser.add_argument('hidden_units', nargs='?', help='number of hidden \
             units', type = int) 
     train_parser.add_argument('init_wt_file', nargs='?', help='path to the file \

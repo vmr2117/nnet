@@ -137,8 +137,8 @@ class network:
         for layer in range(len(theta)): 
             theta[layer] -=  learning_rate * p_derivs[layer]
 
-    def __sgd(self, db_writer, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size = 32,
-            max_epochs = 10, vd_freq = 1563): 
+    def __sgd(self, db_writer, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size,
+            max_epochs, vd_freq): 
         '''
         Performs mini-batch stochastic gradient descent(SGD) on the dataset X,Y
         for a 'max_epochs' epochs. Uses a default batch size of 32 and runs for
@@ -234,7 +234,7 @@ class network:
         return err
 
     def train(self, db_writer, tr_X, tr_Y, vd_X, vd_Y, hidden_units = None,
-            theta = None):
+            theta = None, batch_size = 32, max_epochs = 500, vd_freq = 1563):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
@@ -254,7 +254,8 @@ class network:
         if not theta:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
 
-        return self.__sgd(db_writer, tr_X, tr_Y, vd_X, vd_Y, theta)
+        return self.__sgd(db_writer, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size,
+                max_epochs, vd_freq)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
