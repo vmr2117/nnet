@@ -46,6 +46,7 @@ adaboost_train_200wl:
 											       models/adaboost_200wl_30passes.model \
 												   results/adaboost_200wl_30passes_train.png \
 												   200
+											       30
 
 adaboost_train_50wl:
 	@python src/adaboostSAMME.py train 			   --log_loss --l2 train_file \
@@ -54,6 +55,7 @@ adaboost_train_50wl:
 											       models/adaboost_50wl_30passes.model \
 												   results/adaboost_50wl_30passes_train.png \
 												   50
+												   30
 
 adaboost_test_50wl:
 	@python src/adaboostSAMME.py train             data/numpy_array_multiclass.test \
