@@ -5,12 +5,10 @@ import argparse
 import copy
 import cPickle as pickle
 import numpy as np
-import time
 
 from activation_functions import get_actv_func
 from cost_functions import logistic_cost
 from sklearn.utils import shuffle
-from multiprocessing import Queue
 
 class network:
     def __init__(self, actv_func):
