@@ -33,7 +33,7 @@ def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty, passes):
     all cores.
     '''
     weak_learner = SGDClassifier(loss=wl_loss, penalty=wl_penalty,
-            n_jobs=-1, n_iter = 10)
+            n_jobs=-1, n_iter = passes, shuffle = True)
     ab_classifier = AdaBoostClassifier( weak_learner, n_estimators =
                                         num_estimators, algorithm = algo)
 
