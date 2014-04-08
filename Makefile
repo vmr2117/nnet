@@ -12,7 +12,7 @@ neuralnet_random_init_train:
 neuralnet_random_init_test:
 	@python src/neural_network/nn_runner.py test  --logistic_actv \
 											       data/numpy_array_multiclass.test \
-											       models/neuralnet_random.model
+												   models/neuralnet_random_init.model
 
 neuralnet_adaboost_init_train:
 	@python src/neural_network/nn_runner.py train --logistic_actv \

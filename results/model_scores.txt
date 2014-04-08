@@ -1,0 +1,2 @@
+models/adaboost_40wl_60passes.model 0.8481
+models/neuralnet_random_init.model  0.9813
