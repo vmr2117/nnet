@@ -21,7 +21,7 @@ class db_interface:
     def create_table(self):
         # create table
         create_str = ('CREATE TABLE ' + self.table_name
-                        + ' (iter, tr_err real, vd_err real)')
+                        + ' (iter integer, tr_err real, vd_err real)')
         self.c.execute(create_str)
         self.conn.commit()
 

@@ -14,7 +14,7 @@ def save_fig(perf_data, filename = None):
     tr_errs = [ entry[1] for entry in perf_data]
     vd_errs = [ entry[2] for entry in perf_data]
     plot(iters, tr_errs, 'g', label = 'Training Error')
-    plot(iters, vd_errs, 'r', label = 'Training Error')
+    plot(iters, vd_errs, 'r', label = 'Testing Error')
     legend()
     xlabel('Numer of minibatches')
     ylabel('Error')
