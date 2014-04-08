@@ -43,20 +43,20 @@ adaboost_train_100wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
 											       data/numpy_array_multiclass.train \
 											       data/numpy_array_multiclass.valid \
-											       models/adaboost_100wl_40passes.model \
-												   results/adaboost_100wl_40passes_train.png \
-												   40 \
+											       models/adaboost_100wl_60passes.model \
+												   results/adaboost_100wl_60passes_train.png \
+												   60 \
 											       100
-	# 35 minutes
+	@# 35 minutes
 
 adaboost_train_50wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
 											       data/numpy_array_multiclass.train \
 											       data/numpy_array_multiclass.valid \
-											       models/adaboost_50wl_40passes.model \
-												   results/adaboost_50wl_40passes_train.png \
-												   40 \
-												   50
+											       models/adaboost_50wl_60passes.model \
+												   results/adaboost_50wl_60passes_train.png \
+												   60 \
+												   40
 
 adaboost_test_50wl:
 	@python src/adaboost/adaboostSAMME.py test     data/numpy_array_multiclass.test \
