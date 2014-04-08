@@ -4,10 +4,10 @@ neuralnet_random_init_train:
 											       data/numpy_array_multiclass.valid \
 											       models/neuralnet_random_init.model \
 											       results/neuralnet_random_init_train.db \
-												   2 \
+												   1000 \
 												   1536 \
 												   32 \
-												   500
+												   400
 
 neuralnet_random_init_test:
 	@python src/neural_network/nn_runner.py test  --logistic_actv \
@@ -23,8 +23,8 @@ neuralnet_adaboost_init_train:
 												   1000 \
 												   1536 \
 												   32 \
-												   500 \
-												   weights/adaboost_50wl_10passes_sgd.weights
+												   400 \
+												   weights/adaboost_40wl_60passes.weights
 
 neuralnet_adaboost_init_test:
 	@python src/neural_network/nn_runner.py test  --logistic_actv \
