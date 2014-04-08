@@ -65,5 +65,5 @@ adaboost_test_40wl:
 												   models/adaboost_40wl_60passes.model
 
 adaboost_to_nnet_weights:	
-	@python src/adaboost/model_rewriter.py         models/adaboost_50wl_40passes.model \
-												   weights/adaboost_50wl_40passes.weights
+	@python src/adaboost/model_rewriter.py         models/adaboost_40wl_60passes.model \
+												   weights/adaboost_40wl_60passes.weights
