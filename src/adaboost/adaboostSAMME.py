@@ -6,6 +6,7 @@ import argparse
 import cPickle as pickle
 import numpy as np
 import pylab as pl
+import time
     
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import SGDClassifier
@@ -25,14 +26,14 @@ def load_data(data_file):
     data = pickle.load(open(data_file)) 
     return (data['X'], data['Y'])
 
-def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty):
+def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty, passes):
     '''
     Constructs a adaboost classifier object based on the algorithm, number of
     estimators, loss and penalty function given. Configures the object to run on
     all cores.
     '''
     weak_learner = SGDClassifier(loss=wl_loss, penalty=wl_penalty,
-            n_jobs=-1, n_iter = 10)
+            n_jobs=-1, n_iter = passes, shuffle = True)
     ab_classifier = AdaBoostClassifier( weak_learner, n_estimators =
                                         num_estimators, algorithm = algo)
 
@@ -43,6 +44,7 @@ def train(ab_classifier, train_file, validation_file, model_file, graph_file):
     Takes a configured adaboost classifier object and train it with the training
     data from the data_file and write the learned model to the model_file.
     '''
+    s = time.time()
     train_x, train_y = load_data(train_file)
     ab_classifier = ab_classifier.fit(train_x, train_y)
     write(ab_classifier, model_file) 
@@ -56,6 +58,7 @@ def train(ab_classifier, train_file, validation_file, model_file, graph_file):
     for i, y_pred in enumerate(ab_classifier.staged_predict(valid_x)):
         valid_err[i] = zero_one_loss(y_pred, valid_y)
     save_fig(train_err, valid_err, n_estimators, graph_file)
+    print 'Training time:', time.time() - s, 'seconds'
 
 def save_fig(train_err, valid_err, n_estimators, file_name):
     fig = pl.figure()
@@ -67,10 +70,11 @@ def save_fig(train_err, valid_err, n_estimators, file_name):
     ax.set_xlabel('Number of Learners')
     ax.set_ylabel('Error')
     ax.set_title('Adaboost SAMME on MNIST dataset')
+    ax.xaxis.grid(True)
+    ax.yaxis.grid(True)
     leg = ax.legend(loc='upper right', fancybox=True)
     leg.get_frame().set_alpha(0.7)
     pl.savefig(file_name)
-    pl.show()
 
 def test(model_file, test_file):
     '''
@@ -88,7 +92,7 @@ def parse_train_args(args):
     parsers args required for training and calls the appropriate function.
     '''
     ab_classifier = get_adboost_classifier('SAMME.R', args.num_learners,
-            args.loss, args.pen)
+            args.loss, args.pen, args.epochs)
     train(ab_classifier, args.train_file, args.validation_file, args.model_file,
             args.graph_file)
 
@@ -106,8 +110,10 @@ if __name__ == '__main__':
     train_parser.add_argument('validation_file', help='path to validation data')
     train_parser.add_argument('model_file', help='filepath for model')
     train_parser.add_argument('graph_file', help='filepath for training graph')
-    train_parser.add_argument('num_learners', nargs='?', help='number of boosting\
-            rounds', default = 10, type=int)
+    train_parser.add_argument('epochs', help='number of epochs for weak \
+            learners', type = int)
+    train_parser.add_argument('num_learners', nargs='?', help='number of weak \
+            learners', default = 10, type=int)
     loss_gp = train_parser.add_mutually_exclusive_group()
     loss_gp.set_defaults(loss = 'log')
     loss_gp.add_argument('--log_loss', action = 'store_const', dest = 'loss',

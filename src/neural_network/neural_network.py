@@ -5,15 +5,14 @@ import argparse
 import copy
 import cPickle as pickle
 import numpy as np
-import time
 
 from activation_functions import get_actv_func
 from cost_functions import logistic_cost
+from sklearn.utils import shuffle
 
 class network:
-    def __init__(self, actv_func, log = True):
+    def __init__(self, actv_func):
         self.actv, self.actv_der = get_actv_func(actv_func)
-        self.log = log
 
     def __massage_data(self, X, Y):
         '''
@@ -88,35 +87,26 @@ class network:
                 self.actv_der(z))) 
         return list(reversed(errors))
 
-    def __gradient(self, x, y, theta):
+    def __gradient(self, X, Y, theta):
         '''
-        Estimates the partial derivatives at given a given sample (x, y) using
+        Estimates the average partial gradients at all samples in (X, Y) using
         back propagation algorithm.
 
-        Return: partial derivatives of cost function w.r.t theta evaluated on
-                the sample (x, y)
+        Return: p_derivs - partial gradients of the cost function
         '''
-        Z, activations = self.__feed_forward(x, theta)
-        deltas = self.__back_propagate(Z, activations[-1] - y, theta)
-        p_derivs = [np.outer(deltas[layer], activations[layer]) 
+        Z, activations = self.__feed_forward(X, theta)
+        deltas = self.__back_propagate(Z, activations[-1] - Y, theta)
+        p_derivs = None
+        if len(X.shape) == 2:
+            n_samples, _= X.shape
+            p_derivs = [(np.einsum('ij,ik->jk',deltas[layer], activations[layer]) 
+                         / n_samples)
+                        for layer in range(0, len(activations) - 1)]
+        else:
+            p_derivs = [np.outer(deltas[layer], activations[layer]) 
                                     for layer in range(0, len(activations) - 1)] 
         return p_derivs
  
-    def __full_gradient(self, theta, X, Y):
-        '''
-        Computes the averaged gradient of the cost function at all the samples
-        in (X, Y) using back propagation.
-
-        Return: grad - averaged gradient evaluated on all samples in (X, Y) 
-        '''
-        n_examples, _ = X.shape
-        grad = [np.zeros_like(weights) for weights in theta]
-        for row in range(X.shape[0]):
-            derv_c = self.__gradient(X[row], Y[row], theta)
-            for i in range(len(grad)): grad[i] += derv_c[i]
-        for i in range(len(grad)): grad[i] /= n_examples
-        return grad
-   
     def __numerical_gradient(self, theta, X, Y):
         '''
         Computes numerical gradient of the logistic cost function with respect
@@ -145,28 +135,46 @@ class network:
         for layer in range(len(theta)): 
             theta[layer] -=  learning_rate * p_derivs[layer]
 
-    def __sgd(self, X, Y, X_vd, Y_vd, theta):
+    def __sgd(self, db_writer, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size,
+            max_epochs, vd_freq): 
         '''
-        Performs stochastic gradient descent on the dataset X,Y for the given
-        number of epochs using the given learning rate.
+        Performs mini-batch stochastic gradient descent(SGD) on the dataset X,Y
+        for a 'max_epochs' epochs. Uses a default batch size of 32 and runs for
+        a maximum of 500 epochs through the data_set. Randomly Shuffles the
+        dataset every epoch.
 
         Return: cost_err - list of training cost and validation error
         '''
-        cost_err = {}
-        for epoch in range(1000000):
-           if epoch % 1000 == 0:
-               vd_err = self.__evaluate(X_vd, Y_vd, theta)
-               tr_err = self.__evaluate(X, Y, theta)
-               cost_err[epoch] = (tr_err, vd_err)
-               if not self.log: continue
-               print 'Iteration:', epoch, 'Validation Error:', vd_err, \
-                     'Training Error:', tr_err
-           ind = epoch % X.shape[0]
-           p_derivs = self.__gradient(X[ind], Y[ind], theta)
-           self.__update_weights(p_derivs, 0.001, theta)
-        print "Iterations completed: ", epoch + 1
-        return cost_err
-
+        # generate batch idx for training
+        n_samples, _ = tr_X.shape 
+        batch_idx = [(i * batch_size, (i + 1) * batch_size - 1) 
+                        for i in range(n_samples / batch_size)] 
+        if batch_idx[-1][1] < n_samples - 1:
+            batch_idx.append((batch_idx[-1][1]+1, n_samples - 1))
+        
+        best_vd_err = np.inf
+        best_theta = None
+        epoch = 0
+        while epoch < max_epochs:
+            tr_X, tr_Y = shuffle(tr_X, tr_Y)
+            for num, batch in enumerate(batch_idx):
+                # check training and validation error based on the requested
+                # frequency
+                batch_iters = epoch * len(batch_idx) + num
+                if batch_iters % vd_freq == 0:
+                    tr_err = self.__evaluate(tr_X, tr_Y, theta)
+                    vd_err = self.__evaluate(vd_X, vd_Y, theta)
+                    db_writer.write(batch_iters, tr_err, vd_err)
+                    if vd_err < best_vd_err:
+                        best_vd_err = vd_err
+                        best_theta = theta
+                # update weights
+                X = tr_X[batch[0]:batch[1]]
+                Y = tr_Y[batch[0]:batch[1]]
+                p_derivs = self.__gradient(X, Y, theta)
+                self.__update_weights(p_derivs, 0.02, theta)
+            epoch += 1
+        return best_theta
         
     def __predict(self, X, theta):
         '''
@@ -205,13 +213,13 @@ class network:
         _, n_features = X.shape
         _, n_classes = Y.shape
         theta = self.__random_weights(n_features, n_classes, hidden_units)
-        bprop_grad = self.__full_gradient(theta, X, Y)
+        bprop_grad = self.__gradient(theta, X, Y)
         num_grad = self.__numerical_gradient(theta, X, Y) 
         diff = [np.amax(np.absolute(gradl - dervl)) for gradl, dervl in
                 zip(num_grad, bprop_grad)]
         return max(diff) < 10e-8
 
-    def evaluate(self, X, Y, theta):
+    def test(self, X, Y, theta):
         '''
         Evaluates the error of the network with weights theta by testing on
         samples (X, Y) 
@@ -223,7 +231,8 @@ class network:
                / (1.0 * X.shape[0]))
         return err
 
-    def train(self, X, Y, X_vd, Y_vd, hidden_units = None, theta = None): 
+    def train(self, db_writer, tr_X, tr_Y, vd_X, vd_Y, hidden_units = None,
+            theta = None, batch_size = 32, max_epochs = 500, vd_freq = 1563):
         '''
         Trains the network using Stochastic Gradient Descent. Initialize the
         network with the weights theta, if provided, else uses the hidden units
@@ -235,17 +244,16 @@ class network:
         '''
         ok = (hidden_units is not None or theta is not None)
         assert ok, 'hidden units / weights missing'
-        X, Y = self.__massage_data(X, Y)
-        X_vd, Y_vd = self.__massage_data(X_vd, Y_vd)
 
-        # initialize network
-        _, n_features = X.shape
-        _, n_classes = Y.shape
+        tr_X, tr_Y = self.__massage_data(tr_X, tr_Y)
+        vd_X, vd_Y = self.__massage_data(vd_X, vd_Y)
+        _, n_features = tr_X.shape
+        _, n_classes = tr_Y.shape
         if not theta:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
 
-        cost_err = self.__sgd(X, Y, X_vd, Y_vd, theta)
-        return cost_err, theta
+        return self.__sgd(db_writer, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size,
+                max_epochs, vd_freq)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \
@@ -258,7 +266,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     nnet = network('logistic')
     data = pickle.load(open(args.data_file)) 
-    np.random.seed(19) #seed
     assert nnet.check_gradient(data['X'], data['Y'], args.hidden_units), \
                                                     'Incorrect gradient!'
     print 'Gradient check passed'
