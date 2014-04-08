@@ -20,7 +20,7 @@ def save_fig(perf_data, filename = None):
     ylabel('Error')
     title('Neural Network')
     grid(True)
-    if filename: savefig(file_name)
+    if filename: savefig(filename)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tool to graph the validation \
