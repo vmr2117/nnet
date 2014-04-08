@@ -8,6 +8,7 @@ neuralnet_random_init_train:
 												   1536 \
 												   32 \
 												   400
+	# 7 hours
 
 neuralnet_random_init_test:
 	@python src/neural_network/nn_runner.py test  --logistic_actv \
@@ -47,7 +48,7 @@ adaboost_train_100wl:
 												   results/adaboost_100wl_60passes_train.png \
 												   60 \
 											       100
-	@# 35 minutes
+	# 2.2 hours
 
 adaboost_train_40wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
@@ -57,6 +58,7 @@ adaboost_train_40wl:
 												   results/adaboost_40wl_60passes_train.png \
 												   60 \
 												   40
+	# 1.2 hours
 
 adaboost_test_40wl:
 	@python src/adaboost/adaboostSAMME.py test     data/numpy_array_multiclass.test \
