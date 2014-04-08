@@ -18,11 +18,9 @@ def save_fig(perf_data, filename = None):
     legend()
     xlabel('Numer of minibatches')
     ylabel('Error')
-    title('Neural Network (500 hidden units) - random initalized, LR - 0.02')
+    title('Neural Network')
     grid(True)
-    if not filename: savefig(file_name)
-    show()
-
+    if filename: savefig(file_name)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tool to graph the validation \

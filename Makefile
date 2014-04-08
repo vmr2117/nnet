@@ -4,7 +4,7 @@ neuralnet_random_init_train:
 											       data/numpy_array_multiclass.valid \
 											       models/neuralnet_random_init.model \
 											       results/neuralnet_random_init_train.db \
-												   1000 \
+												   2 \
 												   1536 \
 												   32 \
 												   500
