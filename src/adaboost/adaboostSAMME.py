@@ -73,7 +73,7 @@ def save_fig(train_err, valid_err, n_estimators, file_name):
     ax.xaxis.grid(True, 'minor')
     ax.yaxis.grid(True, 'minor')
     ax.xaxis.grid(True, 'major', linewidth=2)
-    ax.yaxis.grid(True, 'major', linewidht=2)
+    ax.yaxis.grid(True, 'major', linewidth=2)
     leg = ax.legend(loc='upper right', fancybox=True)
     leg.get_frame().set_alpha(0.7)
     pl.savefig(file_name)
