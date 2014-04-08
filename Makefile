@@ -26,6 +26,7 @@ neuralnet_adaboost_init_train:
 												   32 \
 												   400 \
 												   weights/adaboost_40wl_60passes.weights
+	# 6.7 hours
 
 neuralnet_adaboost_init_test:
 	@python src/neural_network/nn_runner.py test  --logistic_actv \
