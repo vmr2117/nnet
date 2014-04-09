@@ -5,6 +5,23 @@
 import numpy as np
 from vowpal_porpoise import VW
 import sys
+
+class Instance(object):
+    def __init__(self, vw_fmt):
+        self.vw_fmt = vw_fmt
+      
+    def featurize(self):
+        raise Exception('Not yet implemented: Instance.featurize')
+
+    def __repr__(self):
+        return self.vw_fmt
+
+'''
+class SimpleInstance(Instance):
+    def featurize(self):
+        return {'a': self.raw_features}
+'''
+
 class adaboostMM:
     def __init__(self,  moniker, path, rounds = 5):
         self.T = rounds
@@ -38,8 +55,10 @@ class adaboostMM:
             #vw_cost is the cost matrix in vowpal wabbit conpatibel version
             csooa_data=self.transform(C,MNIST_DATA)
             print csooa_data[2]
+            #csoaa should be a list of Instance rather than a list of strings
             #call vowpal wabbit for training a weak classifier.
             #self.wlearner[t] = VW("--coass 10 vw_cost -f csoaa.mm.model")
+
             self.wlearner[t]=self.train(csooa_data)
             
             #predicion on train set
@@ -66,8 +85,9 @@ class adaboostMM:
             tuple_exampe=vw_mnist[i].split('| ')
             feature_value=tuple_exampe[1]
             vw_csoaa_example=' '.join([' '.join([str(j)+':'+`COST_MATRIX[i,j]` for j in range(n_features) if COST_MATRIX[i,j] != 0]),'|',feature_value])
-            #print vw_csoaa_example
-            result.append(vw_csoaa_example)
+            Instance(vw_csoaa_example)
+            result.append(Instance(vw_csoaa_example))
+
         return result
     
     def train(self, instance_stream):
