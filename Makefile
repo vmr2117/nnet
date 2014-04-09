@@ -35,11 +35,13 @@ neuralnet_adaboost_init_test:
 
 neuralnet_random_init_train_graph:
 	@python src/neural_network/perf_graph.py       results/neuralnet_random_init_train.db \
-												   results/neuralnet_random_init_train.png 
+												   results/neuralnet_random_init_train.png \
+												   'Neural Network randomly initialized'
 
 neuralnet_adaboost_init_train_graph:
 	@python src/neural_network/perf_graph.py       results/neuralnet_adaboost_init_train.db \
-												   results/neuralnet_adaboost_init_train.png 
+												   results/neuralnet_adaboost_init_train.png \
+												   'Neural Network adaboost initialized'
 
 adaboost_train_100wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
