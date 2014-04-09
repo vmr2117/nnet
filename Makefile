@@ -43,6 +43,12 @@ neuralnet_adaboost_init_train_graph:
 												   results/neuralnet_adaboost_init_train.png \
 												   'Neural Network adaboost initialized'
 
+neuralnet_init_comparison_graph:
+	@python src/neural_network/perf_graph_comp.py  results/neuralnet_random_init_train.db \
+												   results/neuralnet_adaboost_init_train.db \
+												   results/neuralnet_init_comparison_train.png \
+												   'Neural Network Initialization Comparison'
+
 adaboost_train_100wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
 											       data/numpy_array_multiclass.train \
