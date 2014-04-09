@@ -16,7 +16,7 @@ def save_fig(perf_data, filename, ttl):
     plot(iters, tr_errs, 'g', label = 'Training Error')
     plot(iters, vd_errs, 'r', label = 'Validation Error')
     legend()
-    xlabel('epoch')
+    xlabel('Epoch')
     ylabel('Error')
     title(ttl)
     grid(True)
