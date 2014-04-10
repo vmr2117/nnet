@@ -28,42 +28,65 @@ class adaboostMM:
         self.moniker=moniker
         self.wlearner = []
         self.alpha = np.zeros(self.T)
-        self.model=VW(moniker=moniker,passes=10,loss='quadratic', csoaa=10)
+        self.model=VW(moniker=moniker,csoaa=10,)
     
     
     '''MNIST_DATA is a list of strings'''
     def fit(self, MNIST_DATA,Y):
         k = np.unique(Y)
-        print len(k)
-        print np.shape(MNIST_DATA)
         m = np.size(MNIST_DATA)
+   
         '''In our case, the k is 10 for MNIST data set'''
-        f = np.zeros((m, len(k)))
-        C = np.zeros((m, len(k)))
+        f = np.zeros((m, len(k)+1))
+        C = np.zeros((m, len(k)+1))
 
+
+
+      
         for t in range(self.T):
      
             '''choose cost matrix C'''
             # set values where l != yi
-
+            print 't value is ',t
             C = np.exp(f - np.choose(Y, f.T)[:, np.newaxis])
+           
             # set values where l == yi
             C[np.array(range(m)), Y] = 0
+        
             d_sum = -np.sum(C, axis = 1)
             C[np.array(range(m)), Y] = d_sum
 
             #vw_cost is the cost matrix in vowpal wabbit conpatibel version
-            csooa_data=self.transform(C,MNIST_DATA)
-            print csooa_data[2]
+            csoaa_data=self.transform(C,MNIST_DATA)
+
+
+
+
+            #tempfile=open("/home/liguifan/Desktop/rightclassNo","w")
+            
+            #for x in csoaa_data:
+            #     tempfile.write(str(x))
+            # break
+            
             #csoaa should be a list of Instance rather than a list of strings
             #call vowpal wabbit for training a weak classifier.
-            #self.wlearner[t] = VW("--coass 10 vw_cost -f csoaa.mm.model")
+            
+            #self.wlearner.append(c)
+            print 'before length is ', len(csoaa_data)
+            self.train(csoaa_data)
+            print 'after length is ', len(csoaa_data)
+            self.predict(csoaa_data)
 
-            self.wlearner[t]=self.train(csooa_data)
+            print htx
+            # model.predicion(csoaa_data)
             
             #predicion on train set
             #htx is an array of prediction across the whole data
-            _,htx=self.wlearner[t].predicion(csooa_data)
+            
+
+            #_,htx=self.wlearner[t].prediction(csoaa_data)
+            
+
             #theta = weaklearner parameters
             #htx - predicted y and it is an array of predicted values
             
@@ -80,11 +103,12 @@ class adaboostMM:
     '''vw_mnist is a list type and COST_MATRIX is a ndarray type'''
     def transform(self, COST_MATRIX, vw_mnist):
         n_samples, n_features = np.shape(COST_MATRIX)
+        print 'n_features is ', n_features
         result = []
         for i in range(n_samples):
             tuple_exampe=vw_mnist[i].split('| ')
             feature_value=tuple_exampe[1]
-            vw_csoaa_example=' '.join([' '.join([str(j)+':'+`COST_MATRIX[i,j]` for j in range(n_features) if COST_MATRIX[i,j] != 0]),'|',feature_value])
+            vw_csoaa_example=' '.join([' '.join([str(j)+':'+`COST_MATRIX[i,j]` for j in range(1,n_features) if COST_MATRIX[i,j] != 0]),'|',feature_value])
             Instance(vw_csoaa_example)
             result.append(Instance(vw_csoaa_example))
 
@@ -133,7 +157,8 @@ class adaboostMM:
         class_set=np.zeros(examples_no,dtype=int)
         m=0
         for ex in examples:
-            class_set[m]= ord(ex[0])-48
+            class_set[m]= ord(ex[0])-48 +1
+            #print class_set[m]
             m+=1
             
         examples.close()
@@ -147,10 +172,10 @@ if __name__ == '__main__':
     '''    for (instance, prediction) in SimpleModel('example1').train(instances).predict(instances):
         print prediction, instance
     '''
-    path='/home/liguifan/Desktop/new_fold/data/vw_multiclass.valid'
+    path='/home/liguifan/Desktop/validation_part_original'
     adaboost=adaboostMM('liguifan',path, )
     MNIST, Y=adaboost.read_MnistFile(path)
-    print Y
+
 
     adaboost.fit(MNIST,Y)
     '''MNIST_DATA=read_MnistFile(path)
