@@ -1,0 +1,11 @@
+Neural Network 1:
+    initial weights: uniform from [-0.5, 0.5)
+    test error:      0.0177 
+
+Neural Network 2:
+    initial weights: initialized from adaboost with 40 weak learners
+    test error:      0.0184 
+
+Adaboost:
+    number of weak learners: 40
+    test error:      0.1451 
