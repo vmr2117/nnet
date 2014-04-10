@@ -26,7 +26,7 @@ def save_fig(rand_data, adaboost_data, filename, ttl, x_lim, y_lim):
     plot(x_axis, adaboost_nnet_vd_errs, 'k--', label = 'adaboost init Validation Error')
     if x_lim : xlim([0, x_lim])
     if y_lim : ylim([0, y_lim])
-    else: ylim([0, 0.9])
+    else: ylim([0, 0.2])
     legend()
     xlabel('Epoch')
     ylabel('Error')
