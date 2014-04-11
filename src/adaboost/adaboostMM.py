@@ -5,6 +5,11 @@
 import numpy as np
 from vowpal_porpoise import VW
 import sys
+import os
+import tempfile
+import commands
+import itertools
+
 
 class Instance(object):
     def __init__(self, vw_fmt):
@@ -16,19 +21,13 @@ class Instance(object):
     def __repr__(self):
         return self.vw_fmt
 
-'''
-class SimpleInstance(Instance):
-    def featurize(self):
-        return {'a': self.raw_features}
-'''
-
 class adaboostMM:
     def __init__(self,  moniker, path, rounds = 5):
         self.T = rounds
         self.moniker=moniker
         self.wlearner = []
-        self.alpha = np.zeros(self.T)
-        self.model=VW(moniker=moniker,csoaa=10,)
+        self.alpha = np.zeros(rounds)
+        self.model=VW(moniker=moniker, name= 'cache_d', passes=5 , csoaa=10)
     
     
     '''MNIST_DATA is a list of strings'''
@@ -42,7 +41,7 @@ class adaboostMM:
 
 
 
-      
+        
         for t in range(self.T):
      
             '''choose cost matrix C'''
@@ -60,10 +59,6 @@ class adaboostMM:
             csoaa_data=self.transform(C,MNIST_DATA)
 
 
-
-
-            #tempfile=open("/home/liguifan/Desktop/rightclassNo","w")
-            
             #for x in csoaa_data:
             #     tempfile.write(str(x))
             # break
@@ -72,19 +67,19 @@ class adaboostMM:
             #call vowpal wabbit for training a weak classifier.
             
             #self.wlearner.append(c)
-            print 'before length is ', len(csoaa_data)
             self.train(csoaa_data)
-            print 'after length is ', len(csoaa_data)
-            self.predict(csoaa_data)
+            #_, prediction_file = tempfile.mkstemp(dir='.', prefix=self.model.get_prediction_file())
 
-            print htx
-            # model.predicion(csoaa_data)
+
+            temp_htx = self.predict(csoaa_data)
+            htx=[int(i) for i in temp_htx]
+            
+    
             
             #predicion on train set
             #htx is an array of prediction across the whole data
             
-
-            #_,htx=self.wlearner[t].prediction(csoaa_data)
+            #_,htx=self.wlearner[t].predict(csoaa_data)
             
 
             #theta = weaklearner parameters
@@ -95,7 +90,10 @@ class adaboostMM:
             #calculate alpha
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             #update f matrix
-            f = f + alpha * (htx == Y)
+            Y=','.join(Y)
+            print  Y
+            f = f + self.alpha[t] * (htx == Y)
+
     #output final classifier weights.
     
     
@@ -103,14 +101,13 @@ class adaboostMM:
     '''vw_mnist is a list type and COST_MATRIX is a ndarray type'''
     def transform(self, COST_MATRIX, vw_mnist):
         n_samples, n_features = np.shape(COST_MATRIX)
-        print 'n_features is ', n_features
         result = []
         for i in range(n_samples):
             tuple_exampe=vw_mnist[i].split('| ')
             feature_value=tuple_exampe[1]
             vw_csoaa_example=' '.join([' '.join([str(j)+':'+`COST_MATRIX[i,j]` for j in range(1,n_features) if COST_MATRIX[i,j] != 0]),'|',feature_value])
-            Instance(vw_csoaa_example)
-            result.append(Instance(vw_csoaa_example))
+            #Instance(vw_csoaa_example)
+            result.append(vw_csoaa_example)
 
         return result
     
@@ -130,19 +127,21 @@ class adaboostMM:
     def predict(self, instance_stream):
         print '%s: predicting' % self.moniker
         instances = []
+        seen=0
+        
         with self.model.predicting():
             seen = 0
             for instance in instance_stream:
                 self.model.push_instance(instance)
                 instances.append(instance)
                 seen += 1
-        
         print '%s: predicted for %d data points' % (self.moniker, seen)
         predictions = list(self.model.read_predictions_())
-        if seen != len(predictions):
-            raise Exception("Number of labels and predictions do not match!  (%d vs %d)" % \
+        if seen != len(predictions)-1:
+           raise Exception("Number of labels and predictions do not match!  (%d vs %d)" % \
                             (seen, len(predictions)))
-        return itertools.izip(instances, predictions)
+        print predictions[:len(predictions)-1]
+        return  predictions[:len(predictions)-1]
     
     def read_MnistFile(self, file_path):
         examples=open(file_path,"r")
@@ -172,11 +171,14 @@ if __name__ == '__main__':
     '''    for (instance, prediction) in SimpleModel('example1').train(instances).predict(instances):
         print prediction, instance
     '''
-    path='/home/liguifan/Desktop/validation_part_original'
+
+    current_directory=os.getcwd()
+    filename='validation_part_original'
+    path=os.path.join(current_directory, filename)
+
     adaboost=adaboostMM('liguifan',path, )
     MNIST, Y=adaboost.read_MnistFile(path)
-
-
     adaboost.fit(MNIST,Y)
+
     '''MNIST_DATA=read_MnistFile(path)
     fit(MNIST_DATA)'''
