@@ -22,12 +22,12 @@ class Instance(object):
         return self.vw_fmt
 
 class adaboostMM:
-    def __init__(self,  moniker, path, rounds = 5):
+    def __init__(self,  moniker, path, passes,rounds = 5):
         self.T = rounds
         self.moniker=moniker
         self.wlearner = []
         self.alpha = np.zeros(rounds)
-        self.model=VW(moniker=moniker, name= 'cache_d', passes=5 , csoaa=10)
+        self.model=VW(moniker=moniker, name= 'cache_d', passes=passes , csoaa=10)
     
     
     '''MNIST_DATA is a list of strings'''
@@ -46,7 +46,6 @@ class adaboostMM:
      
             '''choose cost matrix C'''
             # set values where l != yi
-            print 't value is ',t
             C = np.exp(f - np.choose(Y, f.T)[:, np.newaxis])
            
             # set values where l == yi
@@ -57,7 +56,6 @@ class adaboostMM:
 
             #vw_cost is the cost matrix in vowpal wabbit conpatibel version
             csoaa_data=self.transform(C,MNIST_DATA)
-
 
             #for x in csoaa_data:
             #     tempfile.write(str(x))
@@ -73,28 +71,27 @@ class adaboostMM:
 
             temp_htx = self.predict(csoaa_data)
             htx=[int(i) for i in temp_htx]
-            print 'value of d_sum is   ', np.sum(d_sum)
+         
             #predicion on train set
             #htx is an array of prediction across the whole data
             
             #_,htx=self.wlearner[t].predict(csoaa_data)
             
-
             #theta = weaklearner parameters
             #htx - predicted y and it is an array of predicted values
             
             #calculate delta using the predicions, cost matrix and f
-            print C
-            print np.array(range(m))
             delta = -np.sum(C[np.array(range(m)), np.array(htx)])/np.sum(d_sum)
-            print delta
+            
             #calculate alpha
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             #update f matrix
-            Y=','.join(Y)
-            print  Y
-            f = f + self.alpha[t] * (htx == Y)
+            for i in range(m):
+                f[i,Y] = f[i,Y] + self.alpha[t] * (htx == Y)
 
+            print 't value is ',t
+            print Y
+            print sum(htx==Y)
     #output final classifier weights.
     
     
@@ -138,11 +135,11 @@ class adaboostMM:
                 seen += 1
         print '%s: predicted for %d data points' % (self.moniker, seen)
         predictions = list(self.model.read_predictions_())
-        if seen != len(predictions)-1:
+        if seen != len(predictions):
            raise Exception("Number of labels and predictions do not match!  (%d vs %d)" % \
                             (seen, len(predictions)))
         print predictions[:len(predictions)-1]
-        return  predictions[:len(predictions)-1]
+        return  predictions[:len(predictions)]
     
     def read_MnistFile(self, file_path):
         examples=open(file_path,"r")
@@ -177,7 +174,7 @@ if __name__ == '__main__':
     filename='validation_part_original'
     path=os.path.join(current_directory, filename)
 
-    adaboost=adaboostMM('liguifan',path, )
+    adaboost=adaboostMM('liguifan',path, 10, 10 )
     MNIST, Y=adaboost.read_MnistFile(path)
     adaboost.fit(MNIST,Y)
 
