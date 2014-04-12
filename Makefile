@@ -66,6 +66,14 @@ adaboost_train_100wl:
 												   60 \
 											       100
 	# 2.2 hours
+adaboost_train_500wl:
+	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
+											       data/numpy_array_multiclass.train \
+											       data/numpy_array_multiclass.valid \
+											       models/adaboost_500wl_1passes.model \
+												   results/adaboost_500wl_1passes_train.png \
+												   1 \
+											       500
 
 adaboost_train_40wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
