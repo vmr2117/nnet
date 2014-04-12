@@ -58,9 +58,9 @@ class adaboostMM:
             #call vowpal wabbit for training a weak classifier.
             
             #self.wlearner.append(c)
-            self.train(csoaa_data)
+            self.wlearner.append(self.train(csoaa_data))
             #_, prediction_file = tempfile.mkstemp(dir='.', prefix=self.model.get_prediction_file())
-            temp_htx = self.predict(csoaa_data)
+            temp_htx = self.wlearner[t].predict(csoaa_data)
             htx=[int(i) for i in temp_htx]
          
             #predicion on train set
@@ -150,6 +150,27 @@ class adaboostMM:
         return (mnist_after,class_set)
 
 
+    '''For this case, we have 10 classes <1...10>'''
+    def ada_classifier(self, example):
+        result=[F(example,i) for i in range(1,11)]
+        return np.argmax(result)
+
+
+    def F(self, example, class_ass):
+        result=0
+        for t in range(self.T):
+            result+=self.alpha[t]*(self.weaklearner[t].predict(example)==class_ass)
+        return result
+
+
+    def test_adaboost(self, examples, label):
+        y_est=[]
+        for example in examples:
+            y_est.append(ada_classifier(example))
+
+        accuracy_rate=float(sum(y_est==list(label)))/len(Y)
+        return accuracy_rate
+
 
 if __name__ == '__main__':
     '''The location of the file we need to process'''
@@ -158,9 +179,11 @@ if __name__ == '__main__':
     path=os.path.join(current_directory, filename)
 
 
-
-    adaboost=adaboostMM('liguifan',path, 10, 10 )
+    T=3
+    adaboost=adaboostMM('liguifan',path, 10, T )
     MNIST, Y=adaboost.read_MnistFile(path)
     adaboost.fit(MNIST,Y)
 
-    print path
+    
+
+
