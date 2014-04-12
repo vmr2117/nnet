@@ -73,9 +73,7 @@ class adaboostMM:
 
             temp_htx = self.predict(csoaa_data)
             htx=[int(i) for i in temp_htx]
-            
-    
-            
+            print 'value of d_sum is   ', np.sum(d_sum)
             #predicion on train set
             #htx is an array of prediction across the whole data
             
@@ -86,7 +84,10 @@ class adaboostMM:
             #htx - predicted y and it is an array of predicted values
             
             #calculate delta using the predicions, cost matrix and f
+            print C
+            print np.array(range(m))
             delta = -np.sum(C[np.array(range(m)), np.array(htx)])/np.sum(d_sum)
+            print delta
             #calculate alpha
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             #update f matrix
