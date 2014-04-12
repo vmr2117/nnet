@@ -38,37 +38,28 @@ class adaboostMM:
         '''In our case, the k is 10 for MNIST data set'''
         f = np.zeros((m, len(k)+1))
         C = np.zeros((m, len(k)+1))
-
-
-
+        #vw_cost is the cost matrix in vowpal wabbit conpatibel version
         
+
+
         for t in range(self.T):
-     
             '''choose cost matrix C'''
             # set values where l != yi
             C = np.exp(f - np.choose(Y, f.T)[:, np.newaxis])
-           
             # set values where l == yi
             C[np.array(range(m)), Y] = 0
-        
             d_sum = -np.sum(C, axis = 1)
             C[np.array(range(m)), Y] = d_sum
-
-            #vw_cost is the cost matrix in vowpal wabbit conpatibel version
-            csoaa_data=self.transform(C,MNIST_DATA)
-
             #for x in csoaa_data:
             #     tempfile.write(str(x))
             # break
-            
+            csoaa_data=self.transform(C,MNIST_DATA)
             #csoaa should be a list of Instance rather than a list of strings
             #call vowpal wabbit for training a weak classifier.
             
             #self.wlearner.append(c)
             self.train(csoaa_data)
             #_, prediction_file = tempfile.mkstemp(dir='.', prefix=self.model.get_prediction_file())
-
-
             temp_htx = self.predict(csoaa_data)
             htx=[int(i) for i in temp_htx]
          
@@ -89,9 +80,7 @@ class adaboostMM:
             for i in range(m):
                 f[i,Y] = f[i,Y] + self.alpha[t] * (htx == Y)
 
-            print 't value is ',t
-            print Y
-            print sum(htx==Y)
+            print 'the accuracy is ', float(sum(htx==Y))/m
     #output final classifier weights.
     
     
@@ -138,7 +127,6 @@ class adaboostMM:
         if seen != len(predictions):
            raise Exception("Number of labels and predictions do not match!  (%d vs %d)" % \
                             (seen, len(predictions)))
-        print predictions[:len(predictions)-1]
         return  predictions[:len(predictions)]
     
     def read_MnistFile(self, file_path):
@@ -164,19 +152,15 @@ class adaboostMM:
 
 
 if __name__ == '__main__':
-
-
-    '''    for (instance, prediction) in SimpleModel('example1').train(instances).predict(instances):
-        print prediction, instance
-    '''
-
+    '''The location of the file we need to process'''
     current_directory=os.getcwd()
-    filename='validation_part_original'
+    filename='vw_multiclass.train'
     path=os.path.join(current_directory, filename)
+
+
 
     adaboost=adaboostMM('liguifan',path, 10, 10 )
     MNIST, Y=adaboost.read_MnistFile(path)
     adaboost.fit(MNIST,Y)
 
-    '''MNIST_DATA=read_MnistFile(path)
-    fit(MNIST_DATA)'''
+    print path
