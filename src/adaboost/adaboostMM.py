@@ -1,6 +1,6 @@
 '''
     adaboost.MM implementation.
-    '''
+'''
 
 import numpy as np
 from vowpal_porpoise import VW
@@ -83,10 +83,13 @@ class adaboostMM:
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             
             #update f matrix
-            for l in range(1,11):
-                    f[np.array(range(m)),l] = f[np.array(range(m)),l] + self.alpha[t] * (htx == l*np.ones(m))
+            #for l in range(1,11):
+            #        f[np.array(range(m)),l] = f[np.array(range(m)),l] + self.alpha[t] * (htx == l*np.ones(m))
+            ind_vec_htx = np.zeros((m, 11))
+            ind_vec_htx[np.array(range(m)), np.array(htx)] = 1
+            f = f + self.alpha[t] *  ind_vec_htx
             
-
+            print f
             print 'current round data', float(sum(htx==Y))/m
     
     
@@ -115,7 +118,7 @@ class adaboostMM:
         print '%s: trained on %d data points' % (self.moniker, seen)
         return self
     
-    
+
     def predict(self, instance_stream):
         #print '%s: predicting' % self.moniker
         instances = []
@@ -212,7 +215,7 @@ if __name__ == '__main__':
     test_file_name='rightclassNo'
     test_path=os.path.join(current_directory, test_file_name)
 
-    T=10
+    T=5
     adaboost=adaboostMM('ML',path, 2, T )
     MNIST, Y=adaboost.read_MnistFile(path)
     adaboost.fit(MNIST,Y)
@@ -227,14 +230,11 @@ if __name__ == '__main__':
     c=[]
     for example in examples:
         c.append(adaboost.ada_classifier(example))
-
     print c
     
     '''print out the weight for weak classifier'''
     for t in range(T):
         print adaboost.alpha[t]
-
-    
 
     
 
