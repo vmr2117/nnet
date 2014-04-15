@@ -85,11 +85,12 @@ class adaboostMM:
             #update f matrix
             #for l in range(1,11):
             #        f[np.array(range(m)),l] = f[np.array(range(m)),l] + self.alpha[t] * (htx == l*np.ones(m))
-            ind_vec_htx = np.zeros((m, 11))
-            ind_vec_htx[np.array(range(m)), np.array(htx)] = 1
-            f = f + self.alpha[t] *  ind_vec_htx
             
-            print f
+            ind_vec_htx = np.zeros_like(f) 
+            ind_vec_htx[np.array(range(m)), np.array(htx)] = self.alpha[t]
+            print 'ALPHA', self.alpha[t]
+            f += ind_vec_htx
+            print 'dims: ',f.shape, ind_vec_htx.shape
             print 'current round data', float(sum(htx==Y))/m
     
     
