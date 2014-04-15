@@ -102,6 +102,14 @@ neuralnet_400init_comparison_graph_blown:
 												   50 \
 												   1
 
+neuralnet_5000init_comparison_graph_blown:
+	@python src/neural_network/perf_graph_comp.py  results/neuralnet_5000random_init_train.db \
+												   results/neuralnet_500adaboost_init_train.db \
+												   results/blwn_neuralnet_5000init_comparison_train.png\
+												   'Neural Network Initialization Comparison' \
+												   130 \
+												   1
+
 # Targets for training adaboost SAMME models.
 adaboost_train_100wl:
 	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
