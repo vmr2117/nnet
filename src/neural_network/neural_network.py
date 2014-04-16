@@ -251,9 +251,10 @@ class network:
         _, n_classes = tr_Y.shape
         if not theta:
             theta = self.__random_weights(n_features, n_classes, hidden_units)
+        init_theta = copy.deepcopy(theta)
 
-        return self.__sgd(db_writer, tr_X, tr_Y, vd_X, vd_Y, theta, batch_size,
-                max_epochs, vd_freq)
+        return (init_theta, self.__sgd(db_writer, tr_X, tr_Y, vd_X, vd_Y, theta,
+                                       batch_size, max_epochs, vd_freq))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Check backprop gradient \

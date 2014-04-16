@@ -19,18 +19,20 @@ def train(args):
     vd_data = pickle.load(open(args.validation_file))
     init_wts = None
     hidden_units = None
-    if args.init_wt_file: init_wts = pickle.load(open(args.init_wt_file))
+    if args.init_wt_file and not args.save_init_wt:
+        init_wts = pickle.load(open(args.init_wt_file))
     if args.hidden_units: hidden_units = args.hidden_units
     
     nnet = network(args.actv)
     db = db_interface(args.model_perf_db)
     db.create_table()
-    theta = nnet.train(db, tr_data['X'],
+    init_theta, theta = nnet.train(db, tr_data['X'],
             tr_data['Y'], vd_data['X'], vd_data['Y'], args.hidden_units,
             init_wts, args.mini_batch_size, args.epochs, args.validation_freq)
     print 'Training time:', time.time() - s, 'seconds'
     pickle.dump(theta, open(args.model_file, 'wb'))
-
+    if args.save_init_wt and args.init_wt_file:
+        pickle.dump(init_theta, open(args.init_wt_file, 'wb'))
 
 def test(args):
     nnet = network(args.actv)
@@ -53,7 +55,9 @@ if __name__ == '__main__':
     train_parser.add_argument('hidden_units', nargs='?', help='number of hidden \
             units', type = int) 
     train_parser.add_argument('init_wt_file', nargs='?', help='path to the file \
-            containing initial weights.')
+            containing weights to initialize network.')
+    train_parser.add_argument('--save_init_wt', action='store_true', help='save initial \
+            wts generated to the init_wt_file')
     actv_gp = train_parser.add_mutually_exclusive_group()
     actv_gp.set_defaults(actv = 'logistic')
     actv_gp.add_argument('--logistic_actv', action = 'store_const', dest =

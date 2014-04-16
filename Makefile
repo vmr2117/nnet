@@ -9,6 +9,19 @@ neuralnet_400random_init_train:
 												   1536 \
 												   32 \
 												   400
+neuralnet_400_save_random_init_wt_train:
+	@python src/neural_network/nn_runner.py train --logistic_actv \
+												  --save_init_wt \
+											       data/numpy_array_multiclass.train \
+											       data/numpy_array_multiclass.valid \
+											       models/neuralnet_400_10_epochs_random_init.model \
+											       results/neuralnet_400_10_epochs_random_init_train.db \
+												   10 \
+												   1536 \
+												   32 \
+												   400 \
+												   weights/400_random_init.weights 
+
 	# 7 hours
 neuralnet_5000random_init_train:
 	@python src/neural_network/nn_runner.py train --logistic_actv \
@@ -110,11 +123,17 @@ neuralnet_5000init_comparison_graph_blown:
 												   130 \
 												   1
 
-neuralnet_wt_comparison_plots:
+neuralnet_adaboost_init_wt_comparison_plots:
 	@python src/neural_network/hinton_diagram.py   weights/adaboost_40wl_60passes.weights \
 												   models/neuralnet_40adaboost_init.model \
 												   'Adaboost Initialized Neural Network' \
-												   results/weight_compare_adaboost_init
+												   results/weight_compare_adaboost_init.png
+
+neuralnet_random_init_wt_comparison_plots:
+	@python src/neural_network/hinton_diagram.py   weights/400_random_init.weights \
+												   models/neuralnet_400_10_epochs_random_init.model \
+												   'Random weight initialized Neural Network' \
+												   results/weight_compare_random_init.png
 
 # Targets for training adaboost SAMME models.
 adaboost_train_100wl:
