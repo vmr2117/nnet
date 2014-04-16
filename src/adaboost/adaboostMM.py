@@ -1,7 +1,6 @@
 '''
     adaboost.MM implementation.
 '''
-
 import numpy as np
 from vowpal_porpoise import VW
 import sys
@@ -10,16 +9,6 @@ import tempfile
 import commands
 import itertools
 
-
-class Instance(object):
-    def __init__(self, vw_fmt):
-        self.vw_fmt = vw_fmt
-      
-    def featurize(self):
-        raise Exception('Not yet implemented: Instance.featurize')
-
-    def __repr__(self):
-        return self.vw_fmt
 
 class adaboostMM:
     def __init__(self,  moniker, path, passes,rounds = 5):
@@ -38,8 +27,8 @@ class adaboostMM:
         m = np.size(MNIST_DATA)
    
         '''In our case, the k is 10 for MNIST data set'''
-        f = np.zeros((m, len(k)+1))
-        C = np.zeros((m, len(k)+1))
+        f = np.zeros((m, len(k)))
+        C = np.zeros((m, len(k)))
         #vw_cost is the cost matrix in vowpal wabbit conpatibel version
         
 
@@ -48,14 +37,14 @@ class adaboostMM:
             '''choose cost matrix C'''
             # set values where l != yi
             C = np.exp(f - np.choose(Y, f.T)[:, np.newaxis])
-            #(10000,1)
 
             # set values where l == yi
             C[np.array(range(m)), Y] = 0
+            print 'the first line after making zero is ',C[1,:]
             d_sum = -np.sum(C, axis = 1)
             C[np.array(range(m)), Y] = d_sum
-            print np.shape(d_sum)
-            #(10000,)
+            print 'd_sum is ', d_sum
+            print 'the first line is ',C[1,:]
             
             #for x in csoaa_data:
             #     tempfile.write(str(x))
@@ -64,7 +53,8 @@ class adaboostMM:
             #csoaa is a list of strings with the format vw takes 
             csoaa_data=self.transform(C,MNIST_DATA)
 
-            for i in range(100):
+            for i in range(20):
+                print Y[i]
                 print 'csoaa format is ', csoaa_data[i]
 
             print 'current t is ', t
@@ -77,7 +67,7 @@ class adaboostMM:
             htx=[int(i) for i in temp_htx]
             
             #calculate delta using the predicions, cost matrix and f
-            delta = -np.sum(C[np.array(range(m)), np.array(htx)])/(-np.sum(d_sum))
+            delta = -np.sum(C[np.array(range(m)), np.array(htx)-1])/(-np.sum(d_sum))
             
             #calculate alpha
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
@@ -85,15 +75,12 @@ class adaboostMM:
             #update f matrix
             #for l in range(1,11):
             #        f[np.array(range(m)),l] = f[np.array(range(m)),l] + self.alpha[t] * (htx == l*np.ones(m))
-            
             ind_vec_htx = np.zeros_like(f) 
-            ind_vec_htx[np.array(range(m)), np.array(htx)] = self.alpha[t]
+            ind_vec_htx[np.array(range(m)), np.array(htx)-1] = self.alpha[t]
             print 'ALPHA', self.alpha[t]
             f += ind_vec_htx
             print 'dims: ',f.shape, ind_vec_htx.shape
-            print 'current round data', float(sum(htx==Y))/m
-    
-    
+            print 'current round data', float(sum(htx==(Y+1)))/m
     
     '''vw_mnist is a list type and COST_MATRIX is a ndarray type'''
     def transform(self, COST_MATRIX, vw_mnist):
@@ -102,7 +89,7 @@ class adaboostMM:
         for i in range(n_samples):
             tuple_exampe=vw_mnist[i].split('| ')
             feature_value=tuple_exampe[1]
-            vw_csoaa_example=' '.join([' '.join([str(j)+':'+`COST_MATRIX[i,j]` for j in range(1,n_features) if COST_MATRIX[i,j] != 0]),'|',feature_value])
+            vw_csoaa_example=' '.join([' '.join([str(j+1)+':'+`COST_MATRIX[i,j]` for j in range(n_features)]),'|',feature_value])
             result.append(vw_csoaa_example)
 
         return result
@@ -162,7 +149,7 @@ class adaboostMM:
         class_set=np.zeros(examples_no,dtype=int)
         m=0
         for ex in examples:
-            class_set[m]= ord(ex[0])-48 +1
+            class_set[m]= ord(ex[0])-48
             m+=1
         examples.close()
         return (mnist_after,class_set)
