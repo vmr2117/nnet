@@ -36,15 +36,20 @@ class adaboostMM:
         for t in range(self.T):
             '''choose cost matrix C'''
             # set values where l != yi
-            C = np.exp(f - np.choose(Y, f.T)[:, np.newaxis])
+            #C = np.exp(f - np.choose(Y, f.T)[:, np.newaxis])
+
+            for i in range(m):
+                for l in range(len(k)):
+                    C[i,l]=np.exp(f[i,l]-f[i,Y[i]])
+
 
             # set values where l == yi
             C[np.array(range(m)), Y] = 0
-            print 'the first line after making zero is ',C[1,:]
-            d_sum = -np.sum(C, axis = 1)
-            C[np.array(range(m)), Y] = d_sum
+            print 'the first line after making zero is ',C[0,:]
+            d_sum = np.sum(C, axis = 1)
+            C[np.array(range(m)), Y] = -d_sum
             print 'd_sum is ', d_sum
-            print 'the first line is ',C[1,:]
+            print 'the first line is ',C[0,:]
             
             #for x in csoaa_data:
             #     tempfile.write(str(x))
@@ -53,7 +58,8 @@ class adaboostMM:
             #csoaa is a list of strings with the format vw takes 
             csoaa_data=self.transform(C,MNIST_DATA)
 
-            for i in range(20):
+            for i in range(1000,1050):
+                print i
                 print Y[i]
                 print 'csoaa format is ', csoaa_data[i]
 
@@ -67,19 +73,22 @@ class adaboostMM:
             htx=[int(i) for i in temp_htx]
             
             #calculate delta using the predicions, cost matrix and f
-            delta = -np.sum(C[np.array(range(m)), np.array(htx)-1])/(-np.sum(d_sum))
+            delta = -np.sum(C[np.array(range(m)), np.array(htx)-1])/(np.sum(d_sum))
             
             #calculate alpha
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             
             #update f matrix
-            #for l in range(1,11):
-            #        f[np.array(range(m)),l] = f[np.array(range(m)),l] + self.alpha[t] * (htx == l*np.ones(m))
+            for i in range(m):
+                for l in range(len(k)):
+                    f[i,l] = f[i,l] + self.alpha[t] * (htx[i]==(l+1))
+            '''
             ind_vec_htx = np.zeros_like(f) 
             ind_vec_htx[np.array(range(m)), np.array(htx)-1] = self.alpha[t]
             print 'ALPHA', self.alpha[t]
             f += ind_vec_htx
-            print 'dims: ',f.shape, ind_vec_htx.shape
+            '''
+            print f[0,:], htx[0]
             print 'current round data', float(sum(htx==(Y+1)))/m
     
     '''vw_mnist is a list type and COST_MATRIX is a ndarray type'''
@@ -203,8 +212,8 @@ if __name__ == '__main__':
     test_file_name='rightclassNo'
     test_path=os.path.join(current_directory, test_file_name)
 
-    T=5
-    adaboost=adaboostMM('ML',path, 2, T )
+    T=10
+    adaboost=adaboostMM('ML',path, 10, T )
     MNIST, Y=adaboost.read_MnistFile(path)
     adaboost.fit(MNIST,Y)
 
