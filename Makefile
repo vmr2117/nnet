@@ -134,7 +134,7 @@ neuralnet_5000init_comparison_graph_blown:
 												   results/neuralnet_500adaboost_init_train.db \
 												   results/blwn_neuralnet_5000init_comparison_train.png\
 												   'Neural Network Initialization Comparison' \
-												   130 \
+												   200 \
 												   1
 
 neuralnet_adaboost_init_wt_comparison_plots:
