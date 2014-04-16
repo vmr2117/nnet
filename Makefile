@@ -9,7 +9,21 @@ neuralnet_400random_init_train:
 												   1536 \
 												   32 \
 												   400
-neuralnet_400_save_random_init_wt_train:
+
+neuralnet_400_save_random_init_wt_50epoch_train:
+	@python src/neural_network/nn_runner.py train --logistic_actv \
+												  --save_init_wt \
+											       data/numpy_array_multiclass.train \
+											       data/numpy_array_multiclass.valid \
+											       models/neuralnet_400_50_epochs_random_init.model \
+											       results/neuralnet_400_50_epochs_random_init_train.db \
+												   50 \
+												   1536 \
+												   32 \
+												   400 \
+												   weights/400_random_init_50_epochs.weights 
+
+neuralnet_400_save_random_init_wt_10epoch_train:
 	@python src/neural_network/nn_runner.py train --logistic_actv \
 												  --save_init_wt \
 											       data/numpy_array_multiclass.train \
@@ -20,7 +34,7 @@ neuralnet_400_save_random_init_wt_train:
 												   1536 \
 												   32 \
 												   400 \
-												   weights/400_random_init.weights 
+												   weights/400_random_init_10_epochs.weights 
 
 	# 7 hours
 neuralnet_5000random_init_train:
@@ -129,11 +143,17 @@ neuralnet_adaboost_init_wt_comparison_plots:
 												   'Adaboost Initialized Neural Network' \
 												   results/weight_compare_adaboost_init.png
 
-neuralnet_random_init_wt_comparison_plots:
-	@python src/neural_network/hinton_diagram.py   weights/400_random_init.weights \
+neuralnet_random_init_50epoch_comp_plots:
+	@python src/neural_network/hinton_diagram.py   weights/400_random_init_50_epochs.weights \
+												   models/neuralnet_400_50_epochs_random_init.model \
+												   'Random weight initialized Neural Network - 50 epochs' \
+												   results/weight_compare_400random_init_50epoch.png
+
+neuralnet_random_init_10epoch_comp_plots:
+	@python src/neural_network/hinton_diagram.py   weights/400_random_init_10_epochs.weights \
 												   models/neuralnet_400_10_epochs_random_init.model \
-												   'Random weight initialized Neural Network' \
-												   results/weight_compare_random_init.png
+												   'Random weight initialized Neural Network - 10 epochs' \
+												   results/weight_compare_400random_init_10epoch.png
 
 # Targets for training adaboost SAMME models.
 adaboost_train_100wl:
