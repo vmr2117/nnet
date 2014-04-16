@@ -114,7 +114,7 @@ neuralnet_wt_comparison_plots:
 	@python src/neural_network/hinton_diagram.py   weights/adaboost_40wl_60passes.weights \
 												   models/neuralnet_40adaboost_init.model \
 												   'Adaboost Initialized Neural Network' \
-												   results/weight_compare
+												   results/weight_compare_adaboost_init
 
 # Targets for training adaboost SAMME models.
 adaboost_train_100wl:
