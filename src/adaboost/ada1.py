@@ -48,7 +48,6 @@ class adaboostMM:
 
             #peakIndexTuple = np.unravel_index(np.argmax(COST), COST.shape)
 
-            
             #for x in csoaa_data:
             #     tempfile.write(str(x))
             # break
@@ -135,7 +134,6 @@ class adaboostMM:
         return (mnist_after,class_set)
 
 
-    
 
     '''For this case, we have 10 classes <1...10>'''
     def ada_classifier(self, examples):

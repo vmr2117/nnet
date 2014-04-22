@@ -6,7 +6,7 @@ import tempfile
 import commands
 import itertools
 
-class weak_learnerMM:
+class weak_learner:
     def __init__(self,  moniker, cache_name, passes):
         self.moniker=moniker
         self.model=VW(moniker=moniker, name= cache_name, passes=passes , csoaa=10)
