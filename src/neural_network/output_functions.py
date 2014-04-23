@@ -1,5 +1,6 @@
-"""This module implements various output function for the final layer in Neural
-Networks
+"""This module implements output functions for units in the output layer,
+associated cost functions and their derivatives with respect to
+pre-output-function sum. 
 """
 
 def linear(X):
@@ -63,3 +64,44 @@ def soft_max(X):
     exp_X_sum = exp_X.sum(axis=1)
     soft_max_X = exp_X / np.tile(exp_X_sum, (1, exp_X.shape[1]))
     return soft_max_X
+
+def nll_softmax_cost(Y, P, theta):
+    """Negative log likelihood cost associate with softmax output units.
+
+    Parameters
+    ----------
+    Y : array_like, shape(n_samples, n_classes)
+        Indicator vector of Targets for samples.
+
+    P : array_like, shape(n_samples, n_classes)
+        Predicted posterior probability of the samples.
+
+    Return
+    ------
+    cost : float
+        Negative log likelihood cost.
+    """
+    cost = np.sum(np.multiply(Y, - np.log(FX)))
+    return cost
+
+def nll_softmax_cost_derv(P, Y):
+    """Derivative of the negative log likelihood cost function with respect to
+    pre-softmax sum.
+
+    Parameters
+    ----------
+    P : array_like, shape(n_samples, n_classes)
+        Predicted posterior probability of the samples.
+
+    Y : array_like, shape(n_sample, n_classes)
+        Indicator vector of Targets for samples.
+
+    Return
+    ------
+    derv : array_like, shape(n_samples)
+        Derivative of the negative log likelihood cost function with respect to
+        the pre-softmax sum.
+    """
+    derv = np.sum(np.multiply(P, Y), axis = 1) - 1.0
+    return derv
+
