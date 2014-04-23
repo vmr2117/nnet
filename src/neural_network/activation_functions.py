@@ -35,8 +35,8 @@ def tanh_derivative(x):
     val = 1.0 - np.tanh(x) ** 2
     return val
 
-def sigmoid(x):
-    """Sigmoid function.
+def logistic(x):
+    """Logistic function.
 
     Parameters
     ----------
@@ -46,7 +46,7 @@ def sigmoid(x):
     Return
     ------
     val : float 
-        Value of sigmoid function at x.
+        Value of logistic function at x.
     """
     val = None
     # handle overflows.
@@ -55,8 +55,8 @@ def sigmoid(x):
     else: val = 1 / (1 + np.exp(-x)) 
     return val
 
-def sigmoid_derivative(x):
-    """ Derivative of sigmoid function.
+def logistic_derivative(x):
+    """ Derivative of logistic function.
 
     Parameters
     ----------
@@ -66,10 +66,10 @@ def sigmoid_derivative(x):
     Return
     ------
     val : float 
-        Value of derivative of sigmoid function at x.
+        Value of derivative of logistic function at x.
     """
-    sig = sigmoid(x)
-    val = sig * (1 - sig) 
+    s = logistic(x)
+    val = s * (1 - s) 
     return val
 
 def get_actv_func(func_name):
@@ -88,12 +88,12 @@ def get_actv_func(func_name):
     func_derv : function
         Derivative of the activation function.
     """
-    assert func_name in ['sigmoid', 'tanh'], 'Unknown activation function'
+    assert func_name in ['logistic', 'tanh'], 'Unknown activation function'
     func = None
     func_derv = None
-    if func_name == 'sigmoid':
-        func = sigmoid
-        func_derv = sigmoid_derivative
+    if func_name == 'logistic':
+        func = logistic
+        func_derv = logistic_derivative
     elif func_name == 'tanh':
         func = tanh
         func_derv = tanh_derivative
