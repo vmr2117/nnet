@@ -43,7 +43,7 @@ def logistic(X):
     X[ps_range] = 1
     return X
 
-def soft_max(X):
+def softmax(X):
     """Soft-Max output function.
 
     Parameters
@@ -105,3 +105,36 @@ def nll_softmax_cost_derv(P, Y):
     derv = np.sum(np.multiply(P, Y), axis = 1) - 1.0
     return derv
 
+def get_output_func(func_name):
+    """Returns output function, costs associated with the output functions and
+    the derivative of the cost functions with respect to the input sums of the
+    output functions.
+
+    Parameters
+    ----------
+    func_name : str
+        Name of the output function.
+
+    Return
+    ------
+    output_func : function
+        Output function.
+
+    cost_func : function
+        Cost function associated with the output function.
+
+    cost_func_derv : function
+        Derivative of the cost function with respect to the input sum of the
+        output function.
+    """
+    assert func_name in ['softmax'], 'Unknown output function'
+    output_func = None
+    cost_func = None
+    cost_func_derv = None
+
+    if func_name == 'softmax':
+        output_func = softmax
+        cost_func = nll_softmax_cost
+        cost_func_derv = nll_softmax_cost_derv
+
+    return output_func, cost_func, cost_func_derv
