@@ -45,7 +45,8 @@ def create_data_set(file_path, destination_dir):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Standardize the mnist \
-                                training, validation and testing data set')
+                                training, validation and testing data set and \
+                                writes the result files.')
     parser.add_argument('mnist_pkl_path', help = 'path to mnist.pkl.gz')
     parser.add_argument('dest_dir', help = 'directory to store the output files')
     args = parser.parse_args()
