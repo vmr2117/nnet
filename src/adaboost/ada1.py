@@ -2,13 +2,14 @@
     adaboost.MM implementation.
 '''
 import numpy as np
-from vowpal_porpoise import VW
 import sys
 import os
 import tempfile
 import commands
 import itertools
 from weak_learnerMM import weak_learner
+import argparse
+
 
 class adaboostMM:
     def __init__(self, rounds = 5):
@@ -60,24 +61,21 @@ class adaboostMM:
             csoaa_data=self.transform(COST,MNIST_DATA,min_element)
           
             #call vowpal wabbit for training a weak classifier.
-            
-            self.wlearner.append(weak_learner('ML', 'cache_d'+str(t) ,10))
-            #self.wlearner[-1].train(csoaa_data)
+            name='cache_m'+str(t)
+            self.wlearner.append(weak_learner('ML', name ,10))
+            temp_htx=self.wlearner[-1].train(csoaa_data).predict(csoaa_data)
     
-            #_, prediction_file = tempfile.mkstemp(dir='.', prefix=self.model.get_prediction_file())
-            temp_htx = self.wlearner[-1].predict(csoaa_data)
             #htx is an array of prediction across the whole data in integer format
             htx=[int(i) for i in temp_htx]
-            print 'predict value is ',htx[0:10]
-            print 'real value is ',Y[0:10]+1
+
             #calculate delta using the predicions, cost matrix and f
             delta = -np.sum(COST[np.array(range(m)), np.array(htx)-1])/(np.sum(d_sum))
             
             #calculate alpha with natural log
             self.alpha[t] = 0.5 * np.log(1.0 * (1 + delta) / (1 - delta))
             print 'ALPHA ',self.alpha[t]
+
             #update f matrix
-            
             for i in range(m):
                 for l in range(len(k)):
                     f[i,l] = f[i,l] + self.alpha[t] * (htx[i]==(l+1))
@@ -102,7 +100,6 @@ class adaboostMM:
             result.append(vw_csoaa_example)
 
         return result
-    
     
 
     def single_predict(self, instance):
@@ -152,6 +149,19 @@ class adaboostMM:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(help = 'sub-command help')
+    train_parser = subparsers.add_parser('train', help= 'train ')
+    train_parser.add_argument('train_file', help='path to training data')
+    train_parser.add_argument('test_file', help='path to training data')
+
+    train_parser.set_defaults(func = train)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+
     '''The location of the file we need to process'''
     current_directory=os.getcwd()
     filename='vw_multiclass.train'
