@@ -20,6 +20,8 @@ class adaboostMM:
     
     '''MNIST_DATA is a list of strings'''
     def fit(self, MNIST_DATA,Y):
+
+
         k = np.unique(Y)
         m = np.size(MNIST_DATA)
    
@@ -56,7 +58,7 @@ class adaboostMM:
             '''write the Cost matrix into file'''
 
             min_element=np.amin(COST)
-
+            print 'MIN ELEMENT IS ',min_element
             #csoaa is a list of strings with the format vw takes 
             csoaa_data=self.transform(COST,MNIST_DATA,min_element)
           
@@ -131,7 +133,6 @@ class adaboostMM:
         return (mnist_after,class_set)
 
 
-
     '''For this case, we have 10 classes <1...10>'''
     def ada_classifier(self, examples):
         result=0
@@ -146,53 +147,17 @@ class adaboostMM:
         final_pred = np.argmax(ft, axis = 1)
         return final_pred+1
 
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(help = 'sub-command help')
-    train_parser = subparsers.add_parser('train', help= 'train ')
-    train_parser.add_argument('train_file', help='path to training data')
-    train_parser.add_argument('test_file', help='path to training data')
-
-    train_parser.set_defaults(func = train)
-
-    args = parser.parse_args()
-    args.func(args)
+    def test_process(self, MNIST):
+        examples=[]
+        for example in MNIST:
+            tuple_exampe=example.split('| ')
+            feature_value=tuple_exampe[1]
+            examples.append('1:1 2:1 3:1 4:1 5:1 6:1 7:1 8:1 9:1 10:1 | '+feature_value)
+        return examples
+            
 
 
 
-    '''The location of the file we need to process'''
-    current_directory=os.getcwd()
-    filename='vw_multiclass.train'
-    #filename='validation_part_original'
-    path=os.path.join(current_directory, filename)
-
-    test_file_name='rightclassNo'
-    test_path=os.path.join(current_directory, test_file_name)
-
-    T=10
-    adaboost=adaboostMM(T)
-    MNIST, Y=adaboost.read_MnistFile(path)
-    adaboost.fit(MNIST,Y)
-
-    
-    
-    '''
-    htx=adaboost.wlearner[0].predict(examples)
-    htx1=adaboost.wlearner[1].predict(examples)
-    print 'the final result is ', htx
-    print 'the final result is ', htx1
-    print 'the final real result', Y[0:23]
-    '''
-    filename='rightclassNo'
-    path=os.path.join(current_directory, filename)
-
-    examples=open(path,"r")
-    ex=examples.readlines()
-   
-    final=adaboost.ada_classifier(ex)
-    print 'the adaboosting algorithm use give the result is  ', final
 
 
     
