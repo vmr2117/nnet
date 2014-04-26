@@ -16,7 +16,7 @@ def tanh(x):
     val : float
         Value of hyperbolic tangent function evaluated at x.
     """
-    val = np.tanh(x)
+    val = 1.7159 * np.tanh((2.0/3.0)*x)
     return val
 
 def tanh_derivative(x):
@@ -32,7 +32,7 @@ def tanh_derivative(x):
     val : float 
         Value of derivative of hyperbolic tangent function at x.
     """
-    val = 1.0 - np.tanh(x) ** 2
+    val = (1.7159 * 2.0 / 3.0) * (1.0 - np.tanh((2.0/3.0)*x) ** 2)
     return val
 
 def logistic(x):
@@ -48,11 +48,12 @@ def logistic(x):
     val : float 
         Value of logistic function at x.
     """
-    val = None
+    val = np.empty_like(x)
     # handle overflows.
-    if x < -45 : val = 0 
-    elif x > 45 : val = 1
-    else: val = 1 / (1 + np.exp(-x)) 
+    val[x < -45] = 0 
+    val[x > 45] = 1
+    inds = np.logical_and(x >= -45, x <= 45)
+    val[inds] = 1 / (1 + np.exp(-x[inds])) 
     return val
 
 def logistic_derivative(x):
