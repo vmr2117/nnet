@@ -1,11 +1,11 @@
 import argparse
 
-from db_interface import db_interface
+from perf_database import PerfDatabase
 from pylab import *
 
 
 def graph(rand_db, adaboost_db, filename, ttl, x_lim, y_lim):
-    db = db_interface(rand_db)
+    db = PerfDatabase(rand_db)
     rand_data = db.read()
     db = db_interface(adaboost_db)
     adaboost_data = db.read()

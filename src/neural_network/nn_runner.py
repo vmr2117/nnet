@@ -6,7 +6,7 @@ import cPickle as pickle
 import numpy as np
 import sys
 
-from db_interface import db_interface
+from perf_database import PerfDatabase
 from feedfwd_neural_network import FFNeuralNetwork
 
 def train(args):
@@ -14,15 +14,16 @@ def train(args):
     vd_data = pickle.load(open(args.validation_file))
     [theta, bias] = pickle.load(open(args.init_wt_file))
     
+    perf_db = PerfDatabase(args.model_perf_db)
+    perf_db.create_table()
     nnet = FFNeuralNetwork()
     nnet.set_activation_func(args.actv)
     nnet.set_output_func('softmax')
     nnet.initialize(theta, bias)
-    db = db_interface(args.model_perf_db)
-    db.create_table()
-    btheta, bbias = nnet.train(db, tr_data['X'],
-            tr_data['Y'], vd_data['X'], vd_data['Y'], args.mini_batch_size,
-            args.epochs, args.validation_freq, args.learn_only_last)
+    nnet.set_perf_db_writer(perf_db_writer)
+    btheta, bbias = nnet.train(tr_data['X'], tr_data['Y'], vd_data['X'],
+            vd_data['Y'], args.mini_batch_size, args.epochs,
+            args.validation_freq, args.learn_only_last)
     pickle.dump([btheta,bbias], open(args.model_file, 'wb'))
 
 def test(args):

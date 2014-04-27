@@ -1,11 +1,11 @@
 import argparse
 
-from db_interface import db_interface
+from perf_database import PerfDatabase
 from pylab import *
 
 
 def graph(db_file, filename, ttl):
-    db = db_interface(db_file)
+    db = PerfDatabase(db_file)
     perf_data = db.read()
     save_fig(perf_data, filename, ttl)
 

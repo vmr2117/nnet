@@ -39,6 +39,9 @@ class FFNeuralNetwork:
         self.theta = None
         self.bias = None
 
+        self.best_vd_err = np.inf
+        self.perf_writer = None
+
     def set_activation_func(self, actv_func):
         """ Sets the activation function for all hidden units in all hidden
         layers.
@@ -59,6 +62,16 @@ class FFNeuralNetwork:
             Name of the output function to use - 'softmax'. 
         """
         self.output, self.cost, self.cost_derv = get_output_func(output_func)
+
+    def set_perf_db_writer(self, perf_writer):
+        """Sets the writer object which is used by the network to dump
+        performance while its training.
+
+        Parameters
+        ----------
+        perf_writer: object, type(PerfWriter)
+        """
+        self.perf_writer = perf_writer
 
     def initialize(self, theta, bias):
         """ Initializes the weights of the network.
@@ -248,7 +261,42 @@ class FFNeuralNetwork:
                / (1.0 * X.shape[0]))
         return err
     
+    def __monitor(self, iter_no, tr_X, tr_Y, vd_X, vd_Y):
+        """Evaluates the network for training and validation error.
+        
+        Parameters
+        ----------
+        iter_no : int
+            Iteration number.
 
+        tr_X : array_like, shape(n_samples, n_feature)
+            Training data.
+
+        tr_Y : array_like, shape(n_samples, n_classes)
+            Targets for samples in tr_X. 
+
+        vd_X : array_like, shape(n_samples, n_feature)
+            Validation data.
+
+        vd_Y : array_like, shape(n_samples, n_classes)
+            Targets for samples in vd_X. 
+
+        Return
+        ------
+        tr_err : float
+            Training error.
+
+        improved : boolean
+            True if the validation error improved over the best seen so far.
+        """
+        tr_err = self.__evaluate(tr_X, tr_Y)
+        vd_err = self.__evaluate(vd_X, vd_Y)
+        self.perf_writer.write(iter_no, tr_err, vd_err)
+        improved = False
+        if vd_err < self.best_vd_err:
+            self.best_vd_err = vd_err
+            improved = True
+        return tr_err, improved
 
     def test(self, X, Y):
         """Tests the performance of network.
@@ -268,15 +316,12 @@ class FFNeuralNetwork:
         Y = self.__create_indicator_vectors(Y)
         return self.__evaluate(X, Y)
 
-    def train(self, db_writer, tr_X, tr_Y, vd_X, vd_Y, batch_size= 32,
+    def train(self, tr_X, tr_Y, vd_X, vd_Y, batch_size= 32,
               max_epochs = 300, vd_freq = 1563, learn_only_last = False):
         """Trains the network using mini-batch Stochastic Gradient Descent.
 
         Parameters
         ----------
-        db_writer : DBWriter
-            Object used to write parameters measured during training.
-
         tr_X : array_like, shape (n_samples, n_features) 
             Training data.
 
@@ -320,26 +365,21 @@ class FFNeuralNetwork:
             batch_idx.append((batch_idx[-1][1]+1, n_samples - 1))
         
         best_vd_err = np.inf
-        best_tr_err = np.inf
+        tr_err = np.inf
         best_theta = [np.empty_like(theta) for theta in self.theta]
         best_bias = [np.empty_like(bias) for bias in self.bias]
         epoch = 0
-        while epoch < max_epochs and best_tr_err > 0:
+        while epoch < max_epochs and tr_err > 0:
             tr_X, tr_Y = shuffle(tr_X, tr_Y)
             for num, batch in enumerate(batch_idx):
                 # check training and validation error based on the requested
                 # frequency
-                batch_iters = epoch * len(batch_idx) + num
-                if batch_iters % vd_freq == 0:
-                    tr_err = self.__evaluate(tr_X, tr_Y)
-                    vd_err = self.__evaluate(vd_X, vd_Y)
-                    db_writer.write(batch_iters, tr_err, vd_err)
-                    if tr_err < best_tr_err: best_tr_err = tr_err
-                    if vd_err < best_vd_err:
-                        best_vd_err = vd_err
-                        for i, (t, b) in enumerate(zip(self.theta, self.bias)):
-                            best_theta[i][:] = t
-                            best_bias[i][:] = b
+                b_iters = epoch * len(batch_idx) + num
+                if b_iters % vd_freq == 0:
+                    tr_err, imp = self.monitor(b_iters, tr_X, tr_Y, vd_X, vd_Y)
+                    if improved:
+                        best_theta = copy.deepcopy(self.theta)
+                        best_bias = copy.deepcopy(self.bias)
                 # update weights
                 X = tr_X[batch[0]:batch[1]]
                 Y = tr_Y[batch[0]:batch[1]]
