@@ -1,197 +1,130 @@
-# Targets for Neural Network with random initial weights.
-neuralnet_400random_init_train:
-	@python src/neural_network/nn_runner.py train --logistic_actv \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/neuralnet_400random_init.model \
-											       results/neuralnet_400random_init_train.db \
-												   1000 \
-												   1536 \
-												   32 \
-												   400
+# Targets to generate standardized traininig, validation and test set.
+generate_standardized_data:
+	python src/data_prep/mnist_dataprep.py \
+	    	data/mnist.pkl.gz \
+		data/	
 
-neuralnet_400_save_random_init_wt_50epoch_train:
-	@python src/neural_network/nn_runner.py train --logistic_actv \
-												  --save_init_wt \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/neuralnet_400_50_epochs_random_init.model \
-											       results/neuralnet_400_50_epochs_random_init_train.db \
-												   50 \
-												   1536 \
-												   32 \
-												   400 \
-												   weights/400_random_init_50_epochs.weights 
+# Targets for adaboost training and testing.
+adaboost_train:
+	python src/adaboost/adaboostSAMME.py \
+		train \
+		data/numpy_array_multiclass.train \
+		data/numpy_array_multiclass.valid \
+		models/adaboost.model \
+		results/adaboost_train.png \
+		1 \
+		1 \
+		--log_loss \
+		--l2
 
-neuralnet_400_save_random_init_wt_10epoch_train:
-	@python src/neural_network/nn_runner.py train --logistic_actv \
-												  --save_init_wt \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/neuralnet_400_10_epochs_random_init.model \
-											       results/neuralnet_400_10_epochs_random_init_train.db \
-												   10 \
-												   1536 \
-												   32 \
-												   400 \
-												   weights/400_random_init_10_epochs.weights 
+adaboost_test:
+	python src/adaboost/adaboostSAMME.py \
+	    	test \
+		data/numpy_array_multiclass.test \
+		models/adaboost.model
 
-	# 7 hours
-neuralnet_5000random_init_train:
-	@python src/neural_network/nn_runner.py train --logistic_actv \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/neuralnet_5000random_init.model \
-											       results/neuralnet_5000random_init_train.db \
-												   1000 \
-												   1536 \
-												   32 \
-												   5000
+# Targets for generating intitial weights for neural network
+ffnn_weights_from_adaboost:	
+	python src/adaboost/model_rewriter.py \
+	    	models/adaboost.model \
+		weights/ffnn_adaboost_init.weights
 
-neuralnet_400random_init_test:
-	@python src/neural_network/nn_runner.py test  --logistic_actv \
-											       data/numpy_array_multiclass.test \
-												   models/neuralnet_400random_init.model
+ffnn_weights_uniform_random:	
+	python src/neural_network/weights_generator.py \
+		weights/ffnn_400tanh_random_init.weights \
+		tanh \
+		784 \
+		400 \
+		10
 
-neuralnet_5000random_init_test:
-	@python src/neural_network/nn_runner.py test  --logistic_actv \
-											       data/numpy_array_multiclass.test \
-												   models/neuralnet_5000random_init.model
+# Targets for Training the network.
+ffnn_400tanh_random_init_train:
+	python src/neural_network/nn_runner.py \
+	   	train \
+		data/numpy_array_multiclass.train \
+		data/numpy_array_multiclass.valid \
+		weights/ffnn_400tanh_random_init.weights \
+		models/ffnn_400tanh_random_init.model \
+		results/ffnn_400tanh_random_init.db \
+		500 \
+		1563 \
+		32 \
+		--tanh_actv
 
-# Targets for Neural Network with initial weights obtained from adaboost.
-neuralnet_40adaboost_init_train:
-	@python src/neural_network/nn_runner.py train --logistic_actv \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/neuralnet_40adaboost_init.model \
-											       results/neuralnet_40adaboost_init_train.db \
-												   1000 \
-												   1536 \
-												   32 \
-												   400 \
-												   weights/adaboost_40wl_60passes.weights
+ffnn_400tanh_adaboost_init_train:
+	python src/neural_network/nn_runner.py \
+	    	train \
+		data/numpy_array_multiclass.train \
+		data/numpy_array_multiclass.valid \
+		weights/ffnn_400tanh_adaboost_init.weights \
+		models/ffnn_400tanh_adaboost_init.model \
+		results/ffnn_400tanh_adaboost_init.db \
+		500 \
+		1563 \
+		32 \
+		--tanh_actv
 
-neuralnet_500adaboost_init_train:
-	@python src/neural_network/nn_runner.py train --logistic_actv \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/neuralnet_500adaboost_init.model \
-											       results/neuralnet_500adaboost_init_train.db \
-												   1000 \
-												   1536 \
-												   32 \
-												   5000 \
-												   weights/adaboost_500wl_1passes.weights
+# Targets for Testing the network.
+ffnn_400tanh_random_init_test:
+	python src/neural_network/nn_runner.py \
+	    	test \
+		data/numpy_array_multiclass.test \
+		models/ffnn_400tanh_random_init.model \
+	    	--tanh_actv
 
-neuralnet_40adaboost_init_test:
-	@python src/neural_network/nn_runner.py test  --logistic_actv \
-											       data/numpy_array_multiclass.test \
-											       models/neuralnet_40adaboost_init.model
+ffnn_400tanh_adaboost_init_test:
+	python src/neural_network/nn_runner.py \
+       		test \
+		data/numpy_array_multiclass.test \
+		models/ffnn_400tanh_adaboost_init.model \
+	    	--tanh_actv 
 
-neuralnet_500adaboost_init_test:
-	@python src/neural_network/nn_runner.py test  --logistic_actv \
-											       data/numpy_array_multiclass.test \
-											       models/neuralnet_500adaboost_init.model
+# Targets for Training performance graphs.
+ffnn_400tanh_random_init_train_graph:
+	python src/neural_network/perf_graph.py \
+		results/ffnn_400tanh_random_init.db \
+		results/ffnn_400tanh_random_init.png \
+		'Neural Network Training graph - uniformly randomly initialized'
 
-# Targets for generating different graphs
+ffnn_400tanh_adaboost_init_train_graph:
+	python src/neural_network/perf_graph.py \
+		results/ffnn_400tanh_adaboost_init.db \
+		results/ffnn_400tanh_adaboost_init.png \
+		'Neural Network Training graph - adaboost initialized'
 
-neuralnet_400random_init_train_graph:
-	@python src/neural_network/perf_graph.py       results/neuralnet_400random_init_train.db \
-												   results/neuralnet_400random_init_train.png \
-												   'Neural Network randomly initialized'
+ffnn_400tanh_train_compare_graph:
+	python src/neural_network/perf_graph_comp.py \
+	    	results/ffnn_400tanh_random_init.db \
+		results/ffnn_400tanh_adaboost_init.db \
+		results/ffnn_400tanh_train_compare.png \
+		'Neural Network Training graph - initializaion comparison'
 
-neuralnet_5000random_init_train_graph:
-	@python src/neural_network/perf_graph.py       results/neuralnet_5000random_init_train.db \
-												   results/neuralnet_5000random_init_train.png \
-												   'Neural Network randomly initialized'
+# Targets for hinton diagrams:
+ffnn_random_init_hinton_comparison_fig:
+	python src/neural_network/hinton_diagram.py \
+	    	weights/ffnn_400tanh_random_init.weights \
+		models/ffnn_400tanh_random_init.model \
+		'Neural Network - Randomly initialized weights' \
+		results/ffnn_random_init_comp_hinton_fig.png
 
-neuralnet_40adaboost_init_train_graph:
-	@python src/neural_network/perf_graph.py       results/neuralnet_40adaboost_init_train.db \
-												   results/neuralnet_40adaboost_init_train.png \
-												   'Neural Network adaboost initialized'
+ffnn_adaboost_init_hinton_comparison_fig:
+	python src/neural_network/hinton_diagram.py \
+	    	weights/ffnn_400tanh_adaboost_init.weights \
+		models/ffnn_400tanh_adaboost_init.model \
+		'Neural Network - Adaboost initialized weights' \
+		results/ffnn_adaboost_init_comp_hinton_fig.png
 
-neuralnet_500adaboost_init_train_graph:
-	@python src/neural_network/perf_graph.py       results/neuralnet_500adaboost_init_train.db \
-												   results/neuralnet_500adaboost_init_train.png \
-												   'Neural Network adaboost initialized'
+# Targets for histograms
+ffnn_random_init_hist_comparison_fig:
+	python src/neural_network/histogram.py \
+	    	weights/ffnn_400tanh_random_init.weights \
+		models/ffnn_400tanh_random_init.model \
+		'Neural Network - Randomly initialized weights' \
+		results/ffnn_random_init_comp_hist_fig.png
 
-neuralnet_400init_comparison_graph:
-	@python src/neural_network/perf_graph_comp.py  results/neuralnet_400random_init_train.db \
-												   results/neuralnet_40adaboost_init_train.db \
-												   results/neuralnet_400init_comparison_train.png \
-												   'Neural Network Initialization Comparison'
-
-neuralnet_400init_comparison_graph_blown:
-	@python src/neural_network/perf_graph_comp.py  results/neuralnet_400random_init_train.db \
-												   results/neuralnet_40adaboost_init_train.db \
-												   results/blwn_neuralnet_400init_comparison_train.png \
-												   'Neural Network Initialization Comparison' \
-												   50 \
-												   1
-
-neuralnet_5000init_comparison_graph_blown:
-	@python src/neural_network/perf_graph_comp.py  results/neuralnet_5000random_init_train.db \
-												   results/neuralnet_500adaboost_init_train.db \
-												   results/blwn_neuralnet_5000init_comparison_train.png\
-												   'Neural Network Initialization Comparison' \
-												   200 \
-												   1
-
-neuralnet_adaboost_init_wt_comparison_plots:
-	@python src/neural_network/hinton_diagram.py   weights/adaboost_40wl_60passes.weights \
-												   models/neuralnet_40adaboost_init.model \
-												   'Adaboost Initialized Neural Network' \
-												   results/weight_compare_adaboost_init.png
-
-neuralnet_random_init_50epoch_comp_plots:
-	@python src/neural_network/hinton_diagram.py   weights/400_random_init_50_epochs.weights \
-												   models/neuralnet_400_50_epochs_random_init.model \
-												   'Random weight initialized Neural Network - 50 epochs' \
-												   results/weight_compare_400random_init_50epoch.png
-
-neuralnet_random_init_10epoch_comp_plots:
-	@python src/neural_network/hinton_diagram.py   weights/400_random_init_10_epochs.weights \
-												   models/neuralnet_400_10_epochs_random_init.model \
-												   'Random weight initialized Neural Network - 10 epochs' \
-												   results/weight_compare_400random_init_10epoch.png
-
-# Targets for training adaboost SAMME models.
-adaboost_train_100wl:
-	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/adaboost_100wl_60passes.model \
-												   results/adaboost_100wl_60passes_train.png \
-												   60 \
-											       100
-
-adaboost_train_40wl:
-	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/adaboost_40wl_60passes.model \
-												   results/adaboost_40wl_60passes_train.png \
-												   60 \
-												   40
-
-	# 2.2 hours
-adaboost_train_500wl:
-	@python src/adaboost/adaboostSAMME.py train    --log_loss --l2 \
-											       data/numpy_array_multiclass.train \
-											       data/numpy_array_multiclass.valid \
-											       models/adaboost_500wl_1passes.model \
-												   results/adaboost_500wl_1passes_train.png \
-												   1 \
-											       500
-
-	# 1.2 hours
-adaboost_test_40wl:
-	@python src/adaboost/adaboostSAMME.py test     data/numpy_array_multiclass.test \
-												   models/adaboost_40wl_60passes.model
-
-40adaboost_to_nnet_weights:	
-	@python src/adaboost/model_rewriter.py         models/adaboost_40wl_60passes.model \
-												   weights/adaboost_40wl_60passes.weights
-500adaboost_to_nnet_weights:	
-	@python src/adaboost/model_rewriter.py         models/adaboost_500wl_1passes.model \
-												   weights/adaboost_500wl_1passes.weights
+ffnn_adaboost_init_hist_comparison_fig:
+	python src/neural_network/histogram.py \
+	    	weights/ffnn_400tanh_adaboost_init.weights \
+		models/ffnn_400tanh_adaboost_init.model \
+		'Neural Network - Adaboost initialized weights' \
+		results/ffnn_adaboost_init_comp_hist_fig.png
