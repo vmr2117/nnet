@@ -311,8 +311,8 @@ class FFNeuralNetwork:
             # update best parameters
             self.best_vd_err = vd_err
             for ind in range(len(self.theta)):
-                best_theta[:][ind] = self.theta[ind]
-                best_bias[:][ind] = self.bias[ind]
+                self.best_theta[:][ind] = self.theta[ind]
+                self.best_bias[:][ind] = self.bias[ind]
 
         # activation distribution
         if self.debug_writer: 

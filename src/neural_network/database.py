@@ -16,9 +16,10 @@ class DatabaseAccessor:
         """
         self.dname = data_class.name
         sqlite3.register_adapter(data_class, data_class.adapt_point)        
-        sqlite3.register_adapter(self.dname, data_class.convert_point)        
+        sqlite3.register_converter(self.dname, data_class.convert_point)        
         self.con = sqlite3.connect(file_path,
-                                   detect_types=sqlite3.PARSE_DECLTYPES)
+                                   detect_types=sqlite3.PARSE_DECLTYPES, 
+                                   isolation_level=None)
 
     def create_table(self):
         """Creates new table
@@ -46,5 +47,6 @@ class DatabaseAccessor:
             List of row entries from the table.
         """
         read_cmd = 'select point from tab'
-        points_list = [row.get_tuple() for row in self.con.execute(read_cmd)]
+        points_list = [row[0].get_tuple()
+                        for row in self.con.execute(read_cmd)]
         return points_list

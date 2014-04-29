@@ -1,13 +1,14 @@
 import argparse
 
-from perf_database import PerfDatabase
+from database import DatabaseAccessor
+from data_structures import Perf
 from pylab import *
 
 
 def graph(rand_db, adaboost_db, filename, ttl, x_lim, y_lim):
-    db = PerfDatabase(rand_db)
+    db = DatabaseAccessor(Perf, rand_db)
     rand_data = db.read()
-    db = db_interface(adaboost_db)
+    db = DatabaseAccessor(Perf, adaboost_db)
     adaboost_data = db.read()
     save_fig(rand_data, adaboost_data, filename, ttl, x_lim, y_lim)
 

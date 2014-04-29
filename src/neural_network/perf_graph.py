@@ -1,11 +1,12 @@
 import argparse
 
-from perf_database import PerfDatabase
+from database import DatabaseAccessor
+from data_structures import Perf
 from pylab import *
 
 
 def graph(db_file, filename, ttl):
-    db = PerfDatabase(db_file)
+    db = DatabaseAccessor(Perf, db_file)
     perf_data = db.read()
     save_fig(perf_data, filename, ttl)
 
