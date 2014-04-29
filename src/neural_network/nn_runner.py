@@ -6,21 +6,25 @@ import cPickle as pickle
 import numpy as np
 import sys
 
-from perf_database import PerfDatabase
-from feedfwd_neural_network import FFNeuralNetwork
+from neural_network import FFNeuralNetwork
+from database import DatabaseAccessor
+from data_structures import Perf, Distribution
 
 def train(args):
     tr_data = pickle.load(open(args.train_file))
     vd_data = pickle.load(open(args.validation_file))
     [theta, bias] = pickle.load(open(args.init_wt_file))
     
-    perf_db = PerfDatabase(args.model_perf_db)
+    perf_db = DatabaseAccessor(Perf, args.model_perf_db)
     perf_db.create_table()
+    debug_db = DatabaseAccessor(Distribution, args.debug_db)
+    debug_db.create_table()
     nnet = FFNeuralNetwork()
     nnet.set_activation_func(args.actv)
     nnet.set_output_func('softmax')
     nnet.initialize(theta, bias)
-    nnet.set_perf_db_writer(perf_db_writer)
+    nnet.set_perf_writer(perf_db)
+    nnet.set_debug_writer(debug_db)
     btheta, bbias = nnet.train(tr_data['X'], tr_data['Y'], vd_data['X'],
             vd_data['Y'], args.mini_batch_size, args.epochs,
             args.validation_freq, args.learn_only_last)
@@ -46,6 +50,8 @@ if __name__ == '__main__':
     train_parser.add_argument('model_file', help='filepath for model')
     train_parser.add_argument('model_perf_db', help='filepath for a file db \
             where training and validation errors are stored')
+    train_parser.add_argument('debug_db', help='filepath for a file db \
+            where debug info like activation distributions are stored')
     train_parser.add_argument('epochs', help='number of epochs to train', type=int)
     train_parser.add_argument('validation_freq', help='frequency of validation', type=int)
     train_parser.add_argument('mini_batch_size', help='mini_batch size for SGD', type=int)

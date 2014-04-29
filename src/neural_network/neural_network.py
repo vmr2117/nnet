@@ -4,10 +4,12 @@ import argparse
 import copy
 import cPickle as pickle
 import numpy as np
+import time
 
 from activation_functions import get_actv_func
 from output_functions import get_output_func
 from sklearn.utils import shuffle
+from data_structures import Perf, Distribution
 
 class FFNeuralNetwork:
     """A Feed Forward Neural Network.
@@ -40,7 +42,10 @@ class FFNeuralNetwork:
         self.bias = None
 
         self.best_vd_err = np.inf
+        self.best_theta = None
+        self.best_bias = None
         self.perf_writer = None
+        self.debug_writer = None
 
     def set_activation_func(self, actv_func):
         """ Sets the activation function for all hidden units in all hidden
@@ -63,7 +68,7 @@ class FFNeuralNetwork:
         """
         self.output, self.cost, self.cost_derv = get_output_func(output_func)
 
-    def set_perf_db_writer(self, perf_writer):
+    def set_perf_writer(self, perf_writer):
         """Sets the writer object which is used by the network to dump
         performance while its training.
 
@@ -72,6 +77,16 @@ class FFNeuralNetwork:
         perf_writer: object, type(PerfWriter)
         """
         self.perf_writer = perf_writer
+
+    def set_debug_writer(self, debug_writer):
+        """Sets the writer object which is used to dump various debug
+        parameters after each evaluation cycle. 
+        
+        Parameters
+        ----------
+        debug_writer: object type(DebugWriter)
+        """
+        self.debug_writer = debug_writer
 
     def initialize(self, theta, bias):
         """ Initializes the weights of the network.
@@ -285,18 +300,30 @@ class FFNeuralNetwork:
         ------
         tr_err : float
             Training error.
-
-        improved : boolean
-            True if the validation error improved over the best seen so far.
         """
+        # validation 
         tr_err = self.__evaluate(tr_X, tr_Y)
         vd_err = self.__evaluate(vd_X, vd_Y)
-        self.perf_writer.write(iter_no, tr_err, vd_err)
-        improved = False
+        if self.perf_writer:
+            self.perf_writer.write(Perf(iter_no, tr_err, vd_err))
+
         if vd_err < self.best_vd_err:
+            # update best parameters
             self.best_vd_err = vd_err
-            improved = True
-        return tr_err, improved
+            for ind in range(len(self.theta)):
+                best_theta[:][ind] = self.theta[ind]
+                best_bias[:][ind] = self.bias[ind]
+
+        # activation distribution
+        if self.debug_writer: 
+            num = int((3.0/100) * vd_X.shape[0])
+            sm_vd_X = vd_X[:num]
+            _, activations = self.__feed_forward(sm_vd_X) 
+            for i, actv in enumerate(activations[1:]):
+                self.debug_writer.write(Distribution('actv', iter_no, i+1,
+                                        np.mean(actv), np.std(actv)))
+
+        return tr_err
 
     def test(self, X, Y):
         """Tests the performance of network.
@@ -351,9 +378,11 @@ class FFNeuralNetwork:
 
         Return
         ------
-        theta : list(array_like)
-            Weights that gave the least validation error through the training
-            phase.
+        best_theta : list(array_like)
+            Best theta found.
+
+        best_bias : list(array_like)
+            Best bias found.
         """
         tr_Y = self.__create_indicator_vectors(tr_Y)
         vd_Y = self.__create_indicator_vectors(vd_Y)
@@ -364,22 +393,21 @@ class FFNeuralNetwork:
         if batch_idx[-1][1] < n_samples - 1:
             batch_idx.append((batch_idx[-1][1]+1, n_samples - 1))
         
+        # initialization 
+        self.best_theta = [np.empty_like(theta) for theta in self.theta]
+        self.best_bias = [np.empty_like(bias) for bias in self.bias]
         best_vd_err = np.inf
         tr_err = np.inf
-        best_theta = [np.empty_like(theta) for theta in self.theta]
-        best_bias = [np.empty_like(bias) for bias in self.bias]
         epoch = 0
+
+        # training - minibatch SGD
         while epoch < max_epochs and tr_err > 0:
             tr_X, tr_Y = shuffle(tr_X, tr_Y)
             for num, batch in enumerate(batch_idx):
-                # check training and validation error based on the requested
-                # frequency
+                # monitor network performance
                 b_iters = epoch * len(batch_idx) + num
                 if b_iters % vd_freq == 0:
-                    tr_err, imp = self.monitor(b_iters, tr_X, tr_Y, vd_X, vd_Y)
-                    if improved:
-                        best_theta = copy.deepcopy(self.theta)
-                        best_bias = copy.deepcopy(self.bias)
+                    tr_err = self.__monitor(b_iters, tr_X, tr_Y, vd_X, vd_Y)
                 # update weights
                 X = tr_X[batch[0]:batch[1]]
                 Y = tr_Y[batch[0]:batch[1]]
@@ -387,7 +415,7 @@ class FFNeuralNetwork:
                 self.__update_weights(theta_derivs, bias_derivs, 0.001,
                                       learn_only_last)
             epoch += 1
-        return best_theta, best_bias
+        return self.best_theta, self.best_bias
 
     def __numerical_gradient(self, X, Y, eps):
         """Computes numerical gradient of the cost function with respect to
