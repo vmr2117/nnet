@@ -320,8 +320,14 @@ class FFNeuralNetwork:
             sm_vd_X = vd_X[:num]
             _, activations = self.__feed_forward(sm_vd_X) 
             for i, actv in enumerate(activations[1:]):
-                self.debug_writer.write(Distribution('actv', iter_no, i+1,
-                                        np.mean(actv), np.std(actv)))
+                self.debug_writer.write(Distribution('activations', iter_no,
+                    i+1, np.mean(actv), np.std(actv)))
+            for i, theta in enumerate(self.theta):
+                self.debug_writer.write(Distribution('weights', iter_no, i+1,
+                    np.mean(theta), np.std(theta)))
+            for i, bias in enumerate(self.bias):
+                self.debug_writer.write(Distribution('biases', iter_no, i+1,
+                    np.mean(bias), np.std(bias)))
 
         return tr_err
 
