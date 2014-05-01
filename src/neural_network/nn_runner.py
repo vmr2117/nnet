@@ -64,7 +64,7 @@ if __name__ == '__main__':
     actv_gp.add_argument('--tanh_actv', action = 'store_const', dest = 'actv',
             const = 'tanh', help = 'tanh activation function')
     train_parser.add_argument('--train_layers', nargs='+', help='train \
-            specified layers - 0 indexed layer numbers')
+            specified layers - 0 indexed layer numbers', type=int)
 
     train_parser.set_defaults(func = train)
 

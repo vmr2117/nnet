@@ -48,7 +48,7 @@ def save_fig(data, filename_prefix):
     ax.set_ylabel('Activations')
     ax.set_title('Activations over training epochs')
     ax.grid()
-    plt.savefig(filename_prefix +'_activations.png')
+    plt.savefig(filename_prefix +'_activations.eps')
 
     # weights graph
     fig, ax = plt.subplots(1)
@@ -102,7 +102,7 @@ def save_fig(data, filename_prefix):
     ax.set_ylabel('Weights')
     ax.set_title('Weights over training epochs')
     ax.grid()
-    plt.savefig(filename_prefix+'_weights.png')
+    plt.savefig(filename_prefix+'_weights.eps')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Graph network weights and \
