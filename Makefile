@@ -73,12 +73,12 @@ graph_ll_ur_init_network_train_perf:
 
 # Targets for Activations and weights debugging.
 graph_ur_init_network_debug_params:
-	python src/neural_network/distribution.py \
+	python src/neural_network/distribution_graph.py \
 		results/ffnn_random_init_784_300_10_tanh.debug \
 		results/ffnn_random_init_784_300_10_tanh_change
 
 graph_ll_ur_init_network_debug_params:
-	python src/neural_network/distribution.py \
+	python src/neural_network/distribution_graph.py \
 		results/ffnn_random_init_784_300_10_tanh_ll.debug \
 		results/ffnn_random_init_784_300_10_tanh_change_ll
 
