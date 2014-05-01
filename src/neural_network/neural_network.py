@@ -311,23 +311,44 @@ class FFNeuralNetwork:
             # update best parameters
             self.best_vd_err = vd_err
             for ind in range(len(self.theta)):
-                self.best_theta[:][ind] = self.theta[ind]
-                self.best_bias[:][ind] = self.bias[ind]
+                self.best_theta[ind][:] = self.theta[ind]
+                self.best_bias[ind][:] = self.bias[ind]
 
-        # activation distribution
         if self.debug_writer: 
             num = int((3.0/100) * vd_X.shape[0])
             sm_vd_X = vd_X[:num]
             _, activations = self.__feed_forward(sm_vd_X) 
-            for i, actv in enumerate(activations[1:]):
-                self.debug_writer.write(Distribution('activations', iter_no,
-                    i+1, np.mean(actv), np.std(actv)))
+            # activations
+            for i, actv in enumerate(activations[1:-1]):
+                p_actvs = actv[actv >= 0]
+                n_actvs = actv[actv < 0]
+                self.debug_writer.write(Distribution('positive activations',
+                    iter_no, i+1, np.mean(p_actvs), np.std(p_actvs), 
+                    np.percentile(p_actvs, 98)))
+                self.debug_writer.write(Distribution('negative activations',
+                    iter_no, i+1, np.mean(n_actvs), np.std(n_actvs),
+                    np.percentile(n_actvs, 02)))
+            # weights
             for i, theta in enumerate(self.theta):
-                self.debug_writer.write(Distribution('weights', iter_no, i+1,
-                    np.mean(theta), np.std(theta)))
+                p_weights = theta[theta >= 0]
+                n_weights = theta[theta < 0]
+                self.debug_writer.write(Distribution('positive weights',
+                    iter_no, i+1, np.mean(p_weights), np.std(p_weights),
+                    np.percentile(p_weights, 98)))
+                self.debug_writer.write(Distribution('negative weights',
+                    iter_no, i+1, np.mean(n_weights), np.std(n_weights),
+                    np.percentile(n_weights, 02)))
+            # biases
             for i, bias in enumerate(self.bias):
-                self.debug_writer.write(Distribution('biases', iter_no, i+1,
-                    np.mean(bias), np.std(bias)))
+                p_bias = bias[bias >= 0]
+                self.debug_writer.write(Distribution('positive bias', iter_no,
+                    i+1, np.mean(p_bias), np.std(p_bias), np.percentile(p_bias,
+                        98)))
+                n_bias = bias[bias < 0]
+                if n_bias.size == 0: continue
+                self.debug_writer.write(Distribution('negative bias', iter_no,
+                    i+1, np.mean(n_bias), np.std(n_bias), np.percentile(n_bias,
+                        02)))
 
         return tr_err
 
@@ -418,7 +439,7 @@ class FFNeuralNetwork:
                 X = tr_X[batch[0]:batch[1]]
                 Y = tr_Y[batch[0]:batch[1]]
                 theta_derivs, bias_derivs = self.__gradient(X, Y)
-                self.__update_weights(theta_derivs, bias_derivs, 0.001,
+                self.__update_weights(theta_derivs, bias_derivs, 0.01,
                                       learn_only_last)
             epoch += 1
         return self.best_theta, self.best_bias

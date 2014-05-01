@@ -7,7 +7,7 @@ import sqlite3
 """
 class Distribution(object):
     name = 'dist'
-    def __init__(self, str_id, iter_no, layer, mean, std):
+    def __init__(self, str_id, iter_no, layer, mean, std, perc_98):
         """Initializer.
 
         Parameters
@@ -26,16 +26,20 @@ class Distribution(object):
 
         std : float
             Standard deviation of the distribution.
+
+        perc : float
+            98'th perventile
         """
         self.str_id = unicode(str_id)
         self.iter_no = iter_no
         self.layer = layer
         self.mean = mean
         self.std = std
+        self.perc = perc_98
 
     def __repr__(self):
-        return '%s;%d;%d;%f;%f' % (self.str_id, self.iter_no, self.layer,
-                self.mean, self.std)
+        return '%s;%d;%d;%f;%f;%f' % (self.str_id, self.iter_no, self.layer,
+                self.mean, self.std, self.perc)
 
     def get_tuple(self):
         """Returns the tuple of members in the object.
@@ -45,22 +49,24 @@ class Distribution(object):
         ret : tuple(str_id, iter_no, layer, mean, std)
             Tuple of members in the object
         """
-        ret = (self.str_id, self.iter_no, self.layer, self.mean, self.std)
+        ret = (self.str_id, self.iter_no, self.layer, self.mean, self.std,
+                self.perc)
         return ret
 
     @staticmethod
     def adapt_point(dist):
-        return '%s;%d;%d;%f;%f' % (dist.str_id, dist.iter_no, dist.layer,
-                dist.mean, dist.std)
+        return '%s;%d;%d;%f;%f;%f' % (dist.str_id, dist.iter_no, dist.layer,
+                dist.mean, dist.std, dist.perc)
 
     @staticmethod
     def convert_point(s):
-        str_id, iter_no, layer, mean, std = s.split(';')
+        str_id, iter_no, layer, mean, std, perc = s.split(';')
         iter_no = int(iter_no)
         layer = int(layer)
         mean = float(mean)
         std = float(std)
-        return Distribution(str_id, iter_no, layer, mean, std)
+        perc = float(perc)
+        return Distribution(str_id, iter_no, layer, mean, std, perc)
 
 """Data structure for storing performance metrics.
 """
