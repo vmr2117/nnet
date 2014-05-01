@@ -38,6 +38,7 @@ class FFNeuralNetwork:
         self.actv_func_derv = None
         self.output_func = None
         self.output_func_derv = None
+        self.train_layers = None
         self.theta = None
         self.bias = None
 
@@ -89,7 +90,7 @@ class FFNeuralNetwork:
         self.debug_writer = debug_writer
 
     def initialize(self, theta, bias):
-        """ Initializes the weights of the network.
+        """Initializes the weights of the network.
 
         theta : list(array_like), shape(n_units, n_inputs)
             List of weights mapping consecutive layers ordered from input to
@@ -101,6 +102,16 @@ class FFNeuralNetwork:
         """
         self.theta = theta
         self.bias = bias
+
+    def set_train_layers(self, layers):
+        """Sets the layers to train.
+
+        Parameters
+        ----------
+        layers : list(int), 0 indexed
+            Index of layers to train.
+        """
+        self.train_layers = set(layers)
 
     def __create_indicator_vectors(self, Y):
         """Converts the target vector Y into a matrix of indicator vectors.
@@ -223,10 +234,14 @@ class FFNeuralNetwork:
                             for layer in range(len(self.theta))] 
             bias_grad = deltas
 
+        for layer in range(len(self.theta)):
+            if layer not in self.train_layers:
+                theta_grad[layer] *= 0
+                bias_grad[layer] *= 0
+
         return theta_grad, bias_grad
 
-    def __update_weights(self, theta_grad, bias_grad, learning_rate,
-            learn_only_last = False):
+    def __update_weights(self, theta_grad, bias_grad, learning_rate):
         """Updates the current weights using the given partial derivatives and
         the learning rate.
 
@@ -240,16 +255,8 @@ class FFNeuralNetwork:
 
         learning_rate : float
             Learning rate.
-
-        learn_only_last : boolean
-            If true, returns only the gradients of weights mapping to the
-            output layer and keep other gradients zero. Default is False.
         """
-        st = 0
-        if learn_only_last:
-            st = len(self.theta) - 1
-
-        for layer in range(st, len(self.theta)): 
+        for layer in range(len(self.theta)): 
             self.theta[layer] -=  learning_rate * theta_grad[layer]
             self.bias[layer] -= learning_rate * bias_grad[layer]
 
@@ -370,8 +377,8 @@ class FFNeuralNetwork:
         Y = self.__create_indicator_vectors(Y)
         return self.__evaluate(X, Y)
 
-    def train(self, tr_X, tr_Y, vd_X, vd_Y, batch_size= 32,
-              max_epochs = 300, vd_freq = 1563, learn_only_last = False):
+    def train(self, tr_X, tr_Y, vd_X, vd_Y, batch_size= 32, max_epochs = 300,
+            vd_freq = 1563):
         """Trains the network using mini-batch Stochastic Gradient Descent.
 
         Parameters
@@ -399,10 +406,6 @@ class FFNeuralNetwork:
             Frequency of validation in units of number of weight updates. The
             default value is 1563.
 
-        learn_only_last : boolean
-            If true, returns only the gradients of weights mapping to the
-            output layer and keep other gradients zero. Default is False.
-
         Return
         ------
         best_theta : list(array_like)
@@ -411,6 +414,7 @@ class FFNeuralNetwork:
         best_bias : list(array_like)
             Best bias found.
         """
+        if not self.train_layers: self.train_layers = set(range(len(self.theta)))
         tr_Y = self.__create_indicator_vectors(tr_Y)
         vd_Y = self.__create_indicator_vectors(vd_Y)
         # generate batch idx for training
@@ -439,8 +443,7 @@ class FFNeuralNetwork:
                 X = tr_X[batch[0]:batch[1]]
                 Y = tr_Y[batch[0]:batch[1]]
                 theta_derivs, bias_derivs = self.__gradient(X, Y)
-                self.__update_weights(theta_derivs, bias_derivs, 0.01,
-                                      learn_only_last)
+                self.__update_weights(theta_derivs, bias_derivs, 0.01)
             epoch += 1
         return self.best_theta, self.best_bias
 
@@ -513,6 +516,7 @@ class FFNeuralNetwork:
         theta = [weights_1] + weights_rest
         bias = [np.random.uniform(-wt, high = wt, size = (10))
                         for _ in range(4)]
+        self.train_layers = list(range(4))
         self.theta = theta
         self.bias = bias
         Y = self.__create_indicator_vectors(Y)

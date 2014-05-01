@@ -23,11 +23,13 @@ def train(args):
     nnet.set_activation_func(args.actv)
     nnet.set_output_func('softmax')
     nnet.initialize(theta, bias)
+    if args.train_layers:
+        nnet.set_train_layers(args.train_layers)
     nnet.set_perf_writer(perf_db)
     nnet.set_debug_writer(debug_db)
     btheta, bbias = nnet.train(tr_data['X'], tr_data['Y'], vd_data['X'],
             vd_data['Y'], args.mini_batch_size, args.epochs,
-            args.validation_freq, args.learn_only_last)
+            args.validation_freq)
     pickle.dump([btheta,bbias], open(args.model_file, 'wb'))
 
 def test(args):
@@ -55,15 +57,15 @@ if __name__ == '__main__':
     train_parser.add_argument('epochs', help='number of epochs to train', type=int)
     train_parser.add_argument('validation_freq', help='frequency of validation', type=int)
     train_parser.add_argument('mini_batch_size', help='mini_batch size for SGD', type=int)
-    train_parser.add_argument('--learn_only_last', help='learn only last \
-            layer', action='store_true')
-
     actv_gp = train_parser.add_mutually_exclusive_group()
     actv_gp.set_defaults(actv = 'logistic')
     actv_gp.add_argument('--logistic_actv', action = 'store_const', dest =
             'actv', const = 'logistic', help = 'logistic activation function')
     actv_gp.add_argument('--tanh_actv', action = 'store_const', dest = 'actv',
             const = 'tanh', help = 'tanh activation function')
+    train_parser.add_argument('--train_layers', nargs='+', help='train \
+            specified layers - 0 indexed layer numbers')
+
     train_parser.set_defaults(func = train)
 
     test_parser = subparsers.add_parser('test', help = 'test neural network')
