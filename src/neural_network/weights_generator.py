@@ -2,7 +2,7 @@ import argparse
 import cPickle as pickle
 import numpy as np
 
-def get_layer_weights(layer_units, activation_func):
+def get_layer_weights(layer_units, activation_func, naive):
     """Returns the list of weights mapping consecutive layers of the network.
 
     Parameters
@@ -14,6 +14,9 @@ def get_layer_weights(layer_units, activation_func):
 
     activation_func : str
         Type of activation units used in the network - 'tanh' or 'logistic'
+
+    naive : bool
+        Use commonly used heuristic to initialize neural networks.
 
     Return
     ------
@@ -30,6 +33,10 @@ def get_layer_weights(layer_units, activation_func):
                 for layer in range(1, len(layer_units))]
     elif activation_func == 'logistic':
         wt = [4*np.sqrt(6.0/(layer_units[layer-1] + layer_units[layer]))
+                for layer in range(1, len(layer_units))]
+
+    if naive:
+        wt = [np.sqrt(1.0/layer_units[layer-1])
                 for layer in range(1, len(layer_units))]
         
     theta = [np.random.uniform(low=-wt[layer-1], high=wt[layer-1],
@@ -51,7 +58,10 @@ if __name__ == '__main__':
                         used',type=str)
     parser.add_argument('layer_units', nargs='+', help='list of number of \
                         units in each layer',type=int)
+    parser.add_argument('--naive', help = 'used commonly used heuristic for \
+                        weight initialization', action='store_false')
 
     args = parser.parse_args()
-    theta, bias = get_layer_weights(args.layer_units, args.activation_func)
+    theta, bias = get_layer_weights(args.layer_units, args.activation_func,
+            args.naive)
     pickle.dump([theta, bias], open(args.weights_file,'wb'))

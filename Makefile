@@ -13,6 +13,14 @@ gen_ur_init_weights:
 		300 \
 		10
 
+gen_naive_ur_init_weights:
+	python src/neural_network/weights_generator.py \
+		weights/random_init_784_300_10_tanh.weights \
+		tanh \
+		784 \
+		300 \
+		10
+
 # Targets for Training and Testing the network.
 train_ur_init_network:
 	python src/neural_network/nn_runner.py \
