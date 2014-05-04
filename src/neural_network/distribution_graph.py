@@ -16,7 +16,7 @@ def graph(db_file, filename_prefix):
     save_fig(data, filename_prefix)
 
 def save_fig(data, filename_prefix):
-    colors = ['blue','green', 'red', 'black', 'magenta']
+    colors = ['blue','green', 'red', 'black', 'yellow']
     # activations graph
     fig, ax = plt.subplots(1)
     p_activations = [item for item in data if item[0] == 'positive activations']
@@ -54,47 +54,54 @@ def save_fig(data, filename_prefix):
     fig, ax = plt.subplots(1)
     p_weights = [item for item in data if item[0] == 'positive weights']
     p_weights.sort(key=lambda tup: tup[2])
-    i = 0
+    ks = []
     for k, g in groupby(p_weights, itemgetter(2)):
         _, _, _, mean, std, perc = map(np.array, zip(*g))
         x = range(len(mean))
-        ax.plot(x , mean, color = colors[i % len(colors)])
-        ax.plot(x , std, '^', color = colors[i % len(colors)])
-        i += 1
+        ax.plot(x , mean, color = colors[(k-1) % len(colors)])
+        ax.plot(x , std, '^', color = colors[(k-1) % len(colors)])
+        ks.append(k)
 
     n_weights = [item for item in data if item[0] == 'negative weights']
     n_weights.sort(key=lambda tup: tup[2])
-    i = 0
     for k, g in groupby(n_weights, itemgetter(2)):
         _, _, _, mean, std, perc = map(np.array, zip(*g))
         x = range(len(mean))
-        ax.plot(x, mean, label= 'L'+str(i+1) + ' wt mean', color =
-                colors[i % len(colors)])
-        ax.plot(x, -1 * std, '^', label= 'L'+str(i+1) + ' wt std',
-                color = colors[i % len(colors)])
-        i += 1
+        ax.plot(x, mean, color = colors[(k-1) % len(colors)])
+        ax.plot(x, -1 * std, '^', color = colors[k-1 % len(colors)])
+        ks.append(k)
+
+    for k in set(ks):
+        ax.plot([], [], label = 'L'+ str(k) + ' wt mean', color = colors[(k-1)
+            % len(colors)])
+        ax.plot([], [], '^', label = 'L'+ str(k) + ' wt std', color = colors[(k-1)
+            % len(colors)])
 
     p_bias = [item for item in data if item[0] == 'positive bias']
     p_bias.sort(key=lambda tup: tup[2])
-    i = 0
+    ks = []
     for k, g in groupby(p_bias, itemgetter(2)):
         _, _, _, mean, std, perc = map(np.array, zip(*g))
         x = range(len(mean))
-        ax.plot(x, mean, color = colors[(i+2) % len(colors)])
-        ax.plot(x, std, '^',color = colors[(i+2) % len(colors)])
-        i += 1
+        ax.plot(x, mean, color = colors[(k+1) % len(colors)])
+        ax.plot(x, std, '^',color = colors[(k+1) % len(colors)])
+        ks.append(k)
 
     n_bias = [item for item in data if item[0] == 'negative bias']
     n_bias.sort(key=lambda tup: tup[2])
-    i = 0
     for k, g in groupby(n_bias, itemgetter(2)):
         _, _, _, mean, std, perc = map(np.array, zip(*g))
         x = range(len(mean))
-        ax.plot(x, mean, label= 'L'+str(i+1) + ' bs mean', color =
-                colors[(i+2) % len(colors)])
-        ax.plot(x, -1 * std, '^',label= 'L'+str(i+1) + ' bs std', color =
-                colors[(i+2) % len(colors)])
-        i += 1
+        ax.plot(x, mean, color = colors[(k+1) % len(colors)])
+        ax.plot(x, -1 * std, '^', color = colors[(k+1) % len(colors)])
+        ks.append(k)
+
+    for k in set(ks):
+        ax.plot([], [], label = 'L'+str(k) + ' bs mean', color =
+            colors[(k+1)%len(colors)])
+        ax.plot([], [],'^', label = 'L'+str(k) + ' bs std', color =
+            colors[(k+1)%len(colors)])
+
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width*0.8, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5)) 
