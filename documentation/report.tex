@@ -30,9 +30,9 @@
 \maketitle
 %
 
-\Section{Abstract} This is a report describing the performance of a shallow
-neural network on MNIST digits dataset with different weight initialization
-schemes.
+\Section{Abstract} This report describes the performance of a shallow neural
+network on MNIST digits dataset with different weight initialization schemes.
+
 \Section{1. Network Structure} \label{sec:network_struct} We built a
 shallow feed forward neural network with one hidden layer with $tanh$
 activation units as recommended in \cite{lecun2012efficient}
@@ -105,7 +105,7 @@ the performance of neural network with random (linear and non linear) features.
 This is done by keeping the weights and biases of layer $1$ fixed, while
 changing only the weights and biases of layer $2$ using Back Propagation. The
 weights and biases in layer $2$ are initialized as mentioned in
-section~\ref{sec:weight_init} while the weights and biases in layer $1$ sampled
+section~\ref{sec:weight_init} while the weights and biases in layer $1$ are sampled
 randomly from a uniform distribution $U[-a, a]$ where $a$ is varied from $0.01$
 to $3.0$. The hidden layer is set to have $300$ hidden units. The network is
 trained using back propagation for $10$ epochs with a fixed learning rate and
@@ -113,7 +113,7 @@ batch size as mentioned in section~\ref{sec:train_method}. The error obtained
 on the test set is recorded in table~\ref{tab:terror}. The number of epochs was
 fixed to $10$ because the training error did not drop further after the first
 epoch. We also did one experiment by choosing the $a=0.6$ such that the mean of
-all activations in the hidden layer lie between the linear region of the
+all activations in the hidden layer lies between the linear region of the
 activation function and its saturation value, see
 figure~\ref{fig:ll_actv_dist}. We also increased the number of hidden units to
 $900$. We observed that although the training error dropped below $10\%$ slowly
