@@ -11,9 +11,11 @@ import numpy as np
 
 def write_weights(adaboost_model_file, nnet_weights_file):
     adaboost_model = pickle.load(open(adaboost_model_file)) 
-    nnet_weights = [np.concatenate((estimator.intercept_[:, np.newaxis],
-        estimator.coef_), axis = 1) for estimator in adaboost_model.estimators_]
-    l1_wts = np.concatenate(tuple(nnet_weights), axis=0)
+    wl_weights = [estimator.coef_ for estimator in adaboost_model.estimators_] 
+    wl_intercepts = [estimator.intercept_ for estimator in adaboost_model.estimators_] 
+    theta_1 = np.concatenate(tuple(wl_weights), axis=0)
+    bias_1 = np.concatenate(tuple(wl_intercepts), axis=0)
+    
 
     n_classes = adaboost_model.n_classes_
     hidden_units = len(adaboost_model.estimators_) * n_classes 
@@ -21,12 +23,15 @@ def write_weights(adaboost_model_file, nnet_weights_file):
                 order='F').reshape((-1,))
     row_inds =np.tile(np.arange(n_classes),(hidden_units/n_classes,
                 1)).T.reshape(-1)
-    l2_wts = np.zeros((n_classes, hidden_units))
-    l2_wts[row_inds, col_inds] = np.tile(adaboost_model.estimator_weights_,
+    theta_2 = np.zeros((n_classes, hidden_units))
+    theta_2[row_inds, col_inds] = np.tile(adaboost_model.estimator_weights_,
             (n_classes,))
 
-    layer_weights = [l1_wts, l2_wts]
-    pickle.dump(layer_weights, open(nnet_weights_file, 'wb'))
+    bias_2 = np.zeros((n_classes,))
+
+    theta = [theta_1, theta_2]
+    bias = [bias_1, bias_2]
+    pickle.dump([theta, bias], open(nnet_weights_file, 'wb'))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='''Convert adaboostSAMME model 

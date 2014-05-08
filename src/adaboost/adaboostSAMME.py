@@ -10,6 +10,7 @@ import time
     
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import SGDClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import zero_one_loss
 
@@ -32,8 +33,11 @@ def get_adboost_classifier(algo, num_estimators, wl_loss, wl_penalty, passes):
     estimators, loss and penalty function given. Configures the object to run on
     all cores.
     '''
+    '''
     weak_learner = SGDClassifier(loss=wl_loss, penalty=wl_penalty,
             n_jobs=-1, n_iter = passes, shuffle = True)
+    '''
+    weak_learner = DecisionTreeClassifier(max_depth=30)
     ab_classifier = AdaBoostClassifier( weak_learner, n_estimators =
                                         num_estimators, algorithm = algo)
 

@@ -6,39 +6,40 @@ import cPickle as pickle
 import numpy as np
 import sys
 
-from db_interface import db_interface
-from neural_network import network
-from pylab import *
-from signal import signal
-import time
-
+from neural_network import FFNeuralNetwork
+from database import DatabaseAccessor
+from data_structures import Perf, Distribution
 
 def train(args):
-    s = time.time()
     tr_data = pickle.load(open(args.train_file))
     vd_data = pickle.load(open(args.validation_file))
-    init_wts = None
-    hidden_units = None
-    if args.init_wt_file and not args.save_init_wt:
-        init_wts = pickle.load(open(args.init_wt_file))
-    if args.hidden_units: hidden_units = args.hidden_units
+    [theta, bias] = pickle.load(open(args.init_wt_file))
     
-    nnet = network(args.actv)
-    db = db_interface(args.model_perf_db)
-    db.create_table()
-    init_theta, theta = nnet.train(db, tr_data['X'],
-            tr_data['Y'], vd_data['X'], vd_data['Y'], args.hidden_units,
-            init_wts, args.mini_batch_size, args.epochs, args.validation_freq)
-    print 'Training time:', time.time() - s, 'seconds'
-    pickle.dump(theta, open(args.model_file, 'wb'))
-    if args.save_init_wt and args.init_wt_file:
-        pickle.dump(init_theta, open(args.init_wt_file, 'wb'))
+    perf_db = DatabaseAccessor(Perf, args.model_perf_db)
+    perf_db.create_table()
+    debug_db = DatabaseAccessor(Distribution, args.debug_db)
+    debug_db.create_table()
+    nnet = FFNeuralNetwork()
+    nnet.set_activation_func(args.actv)
+    nnet.set_output_func('softmax')
+    nnet.initialize(theta, bias)
+    if args.train_layers:
+        nnet.set_train_layers(args.train_layers)
+    nnet.set_perf_writer(perf_db)
+    nnet.set_debug_writer(debug_db)
+    btheta, bbias = nnet.train(tr_data['X'], tr_data['Y'], vd_data['X'],
+            vd_data['Y'], args.mini_batch_size, args.epochs,
+            args.validation_freq)
+    pickle.dump([btheta,bbias], open(args.model_file, 'wb'))
 
 def test(args):
-    nnet = network(args.actv)
-    theta = pickle.load(open(args.model_file))
+    [theta, bias] = pickle.load(open(args.model_file))
+    nnet = FFNeuralNetwork()
+    nnet.set_activation_func(args.actv)
+    nnet.set_output_func('softmax')
+    nnet.initialize(theta, bias)
     data = pickle.load(open(args.test_file))
-    print "Accuracy :", 1.0 - nnet.test(data['X'], data['Y'], theta)
+    print 'Error :',nnet.test(data['X'], data['Y'])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -46,24 +47,25 @@ if __name__ == '__main__':
     train_parser = subparsers.add_parser('train', help= 'train neural network')
     train_parser.add_argument('train_file', help='path to training data')
     train_parser.add_argument('validation_file', help='path to validation data')
+    train_parser.add_argument('init_wt_file', help='path to the file containing\
+            weights to initialize network.')
     train_parser.add_argument('model_file', help='filepath for model')
     train_parser.add_argument('model_perf_db', help='filepath for a file db \
             where training and validation errors are stored')
+    train_parser.add_argument('debug_db', help='filepath for a file db \
+            where debug info like activation distributions are stored')
     train_parser.add_argument('epochs', help='number of epochs to train', type=int)
     train_parser.add_argument('validation_freq', help='frequency of validation', type=int)
     train_parser.add_argument('mini_batch_size', help='mini_batch size for SGD', type=int)
-    train_parser.add_argument('hidden_units', nargs='?', help='number of hidden \
-            units', type = int) 
-    train_parser.add_argument('init_wt_file', nargs='?', help='path to the file \
-            containing weights to initialize network.')
-    train_parser.add_argument('--save_init_wt', action='store_true', help='save initial \
-            wts generated to the init_wt_file')
     actv_gp = train_parser.add_mutually_exclusive_group()
     actv_gp.set_defaults(actv = 'logistic')
     actv_gp.add_argument('--logistic_actv', action = 'store_const', dest =
             'actv', const = 'logistic', help = 'logistic activation function')
     actv_gp.add_argument('--tanh_actv', action = 'store_const', dest = 'actv',
             const = 'tanh', help = 'tanh activation function')
+    train_parser.add_argument('--train_layers', nargs='+', help='train \
+            specified layers - 0 indexed layer numbers', type=int)
+
     train_parser.set_defaults(func = train)
 
     test_parser = subparsers.add_parser('test', help = 'test neural network')
