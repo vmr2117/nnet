@@ -58,7 +58,7 @@ def write(data, data_dir, fmt, filename_suff=''):
         pickle.dump(ts_data,
                     open(path.join(data_dir, fmt + '_' + filename_suff + '.test'), 'wb'))
     elif fmt == 'vw':
-        write_wv_format(ts_data,
+        write_wv_format(tr_data,
                     open(path.join(data_dir, fmt + '_' + filename_suff + '.train'), 'wb'))
         write_wv_format(vd_data,
                     open(path.join(data_dir, fmt + '_' + filename_suff + '.valid'), 'wb'))

@@ -39,5 +39,3 @@ nosetests.xml
 *.train
 *.test
 *.valid
-*.model
-*.weights
