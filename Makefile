@@ -46,7 +46,7 @@ adaboost_train_100wl:
 											       models/adaboost_100wl_40passes.model \
 												   results/adaboost_100wl_40passes_train.png \
 												   40 \
-											       100
+												   3
 	# 35 minutes
 
 adaboost_train_50wl:
